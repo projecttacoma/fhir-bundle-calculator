@@ -8,11 +8,17 @@
     "lint-fix": "eslint ./**/*.js --fix",
     "test": "jest"
   },
+  "bin": {
+    "calculate-bundles": "./src/cli.js"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.19.0",
-    "commander": "^4.0.1"
+    "commander": "^4.0.1",
+    "json2csv": "^4.5.4",
+    "lodash": "^4.17.15",
+    "moment": "^2.24.0"
   },
   "devDependencies": {
     "eslint": "^6.6.0",
