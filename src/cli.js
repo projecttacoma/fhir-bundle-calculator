@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/* eslint-disable no-await-in-loop */
+
 /**
  * CLI for using the $cql operaiton of a cqf-ruler instance
  * to output calculation results for FHIR patients
@@ -66,55 +68,67 @@ const bundleFiles = fs.readdirSync(program.directory).filter((f) => path.extname
 const cql = fs.readFileSync(program.cql, 'utf8');
 const results = [];
 
-bundleFiles.forEach(async (file) => {
-  const bundlePath = path.join(path.resolve(program.directory), file);
-  const bundleId = path.basename(bundlePath, '.json');
-  const bundle = JSON.parse(fs.readFileSync(bundlePath, 'utf8'));
+const processBundles = async (files) => {
+  // Notes: Need to use for ... of ... to allow loop to halt until we get a response from the server
+  // eslint-disable-next-line no-restricted-syntax
+  for (const file of files) {
+    const bundlePath = path.join(path.resolve(program.directory), file);
+    const bundleId = path.basename(bundlePath, '.json');
+    const bundle = JSON.parse(fs.readFileSync(bundlePath, 'utf8'));
 
-  // POST bundle to the server
-  let postBundleResponse;
-  try {
-    console.log(`Posting bundle ${bundlePath}`);
-    postBundleResponse = await axios.post(program.url, bundle);
-  } catch (e) {
-    throw new Error('Failed to post bundle');
+    // POST bundle to the server
+    let postBundleResponse;
+    try {
+      console.log(`Posting bundle ${bundlePath}`);
+      postBundleResponse = await axios.post(program.url, bundle);
+    } catch (e) {
+      throw new Error('Failed to post bundle');
+    }
+
+    // Server may generate the ID for the posted patient resource
+    const patientLoc = postBundleResponse.data.entry.find((e) => e.response.location.includes('Patient/')).response.location;
+
+    // ID will be of format Patient/<something>
+    const patientId = patientLoc.split('/')[1];
+
+    const res = await calculate(
+      program.url,
+      cql,
+      patientId,
+      program.periodStart,
+      program.periodEnd,
+    );
+
+    // Result includes the Bundle's file name and the booleans for the various populations
+    // Used for csv generation
+    results.push({
+      bundle: bundleId,
+      ...res,
+    });
+
+    // Write the content to the proper directories
+    const bundleContent = JSON.stringify(bundle);
+    if (res.initial_population) {
+      console.log(`Wrote bundle ${bundlePath} to ${ippPath}`);
+      fs.writeFileSync(`${ippPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+    }
+
+    if (res.numerator) {
+      console.log(`Wrote bundle ${bundlePath} to ${numerPath}`);
+      fs.writeFileSync(`${numerPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+    }
+
+    if (res.denominator) {
+      console.log(`Wrote bundle ${bundlePath} to ${denomPath}`);
+      fs.writeFileSync(`${denomPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+    }
+
+    // Writes the csv file once we have processed all bundles
+    if (results.length === bundleFiles.length) {
+      fs.writeFileSync(outputFile, parse(results), 'utf8');
+      console.log(`Wrote csv output to ${outputFile}`);
+    }
   }
+};
 
-  // Server may generate the ID for the posted patient resource
-  const patientLoc = postBundleResponse.data.entry.find((e) => e.response.location.includes('Patient/')).response.location;
-
-  // ID will be of format Patient/<something>
-  const patientId = patientLoc.split('/')[1];
-
-  const res = await calculate(program.url, cql, patientId, program.periodStart, program.periodEnd);
-
-  // Result includes the Bundle's file name and the booleans for the various populations
-  // Used for csv generation
-  results.push({
-    bundle: bundleId,
-    ...res,
-  });
-
-  // Write the content to the proper directories
-  const bundleContent = JSON.stringify(bundle);
-  if (res.initial_population) {
-    console.log(`Wrote bundle ${bundlePath} to ${ippPath}`);
-    fs.writeFileSync(`${ippPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
-  }
-
-  if (res.numerator) {
-    console.log(`Wrote bundle ${bundlePath} to ${numerPath}`);
-    fs.writeFileSync(`${numerPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
-  }
-
-  if (res.denominator) {
-    console.log(`Wrote bundle ${bundlePath} to ${denomPath}`);
-    fs.writeFileSync(`${denomPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
-  }
-
-  // Writes the csv file once we have processed all bundles
-  if (results.length === bundleFiles.length) {
-    fs.writeFileSync(outputFile, parse(results), 'utf8');
-    console.log(`Wrote csv output to ${outputFile}`);
-  }
-});
+processBundles(bundleFiles);
