@@ -56,7 +56,7 @@ The CLI will create a directory called `output`, and inside this directory will 
 
 ```
 output
-├── results-YYYY-MM-DD
+├── results-YYYY-MM-DD-THHmmss
 │   ├── denominator
 │   │   ├── a-patient-bundle.json
 │   │   └── ...
