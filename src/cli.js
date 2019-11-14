@@ -74,6 +74,7 @@ bundleFiles.forEach(async (file) => {
   // POST bundle to the server
   let postBundleResponse;
   try {
+    console.log(`Posting bundle ${bundlePath}`);
     postBundleResponse = await axios.post(program.url, bundle);
   } catch (e) {
     throw new Error('Failed to post bundle');
@@ -97,20 +98,23 @@ bundleFiles.forEach(async (file) => {
   // Write the content to the proper directories
   const bundleContent = JSON.stringify(bundle);
   if (res.initial_population) {
+    console.log(`Wrote bundle ${bundlePath} to ${ippPath}`);
     fs.writeFileSync(`${ippPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
   }
 
   if (res.numerator) {
+    console.log(`Wrote bundle ${bundlePath} to ${numerPath}`);
     fs.writeFileSync(`${numerPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
   }
 
   if (res.denominator) {
+    console.log(`Wrote bundle ${bundlePath} to ${denomPath}`);
     fs.writeFileSync(`${denomPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
   }
 
   // Writes the csv file once we have processed all bundles
   if (results.length === bundleFiles.length) {
     fs.writeFileSync(outputFile, parse(results), 'utf8');
-    console.log(`Wrote output to ${outputFile}`);
+    console.log(`Wrote csv output to ${outputFile}`);
   }
 });
