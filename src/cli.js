@@ -50,7 +50,7 @@ if (!fs.existsSync(outputRoot)) {
 }
 
 // Output for this run is timestamped with the current datetime
-const outputPath = path.join(outputRoot, `/results-${moment().format()}`);
+const outputPath = path.join(outputRoot, `/results-${moment().format('YYYY-MM-DD-THHmmss')}`);
 const ippPath = path.join(outputPath, '/ipp');
 const numerPath = path.join(outputPath, '/numerator');
 const denomPath = path.join(outputPath, '/denominator');
@@ -82,7 +82,7 @@ const processBundles = async (files) => {
       console.log(`Posting bundle ${bundlePath}`);
       postBundleResponse = await axios.post(program.url, bundle);
     } catch (e) {
-      throw new Error('Failed to post bundle');
+      throw new Error(`Failed to post bundle:\n\n${e.message}`);
     }
 
     // Server may generate the ID for the posted patient resource
