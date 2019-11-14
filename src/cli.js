@@ -25,7 +25,7 @@ program
   .option('-u --url <url>', 'Base URL of running cqf-ruler instance')
   .option('-s --period-start <yyyy-mm-dd>', 'Start of the calculation period', '2019-01-01')
   .option('-e --period-end <yyyy-mm-dd>', 'End of the calculation period', '2019-12-31')
-  .usage(' -d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url>')
+  .usage('-d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd]')
   .parse(process.argv);
 
 
