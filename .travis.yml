@@ -4,8 +4,8 @@ node_js:
   - "12"
 
 script:
-  - yarn test
-  - yarn lint
+  - npm test
+  - npm run lint
 
 notifications:
   email: false
