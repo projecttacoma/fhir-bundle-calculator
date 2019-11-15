@@ -54,12 +54,14 @@ const outputPath = path.join(outputRoot, `/results-${moment().format('YYYY-MM-DD
 const ipopPath = path.join(outputPath, '/ipop');
 const numerPath = path.join(outputPath, '/numerator');
 const denomPath = path.join(outputPath, '/denominator');
+const errorPath = path.join(outputPath, '/errors');
 
 // Create subdirectories for timestamped results and sorted populations
 fs.mkdirSync(outputPath);
 fs.mkdirSync(ipopPath);
 fs.mkdirSync(numerPath);
 fs.mkdirSync(denomPath);
+fs.mkdirSync(errorPath);
 
 const outputFile = `${outputPath}/results.csv`;
 
@@ -108,8 +110,10 @@ const processBundles = async (files) => {
 
     // Write the content to the proper directories
     const bundleContent = JSON.stringify(bundle);
-
-    if (res.numerator) {
+    if (res.error) {
+      console.error(`Error during $cql operation for ${bundlePath}`);
+      fs.writeFileSync(`${errorPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+    } else if (res.numerator) {
       console.log(`Wrote bundle ${bundlePath} to ${numerPath}`);
       fs.writeFileSync(`${numerPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
     } else if (res.denominator) {

@@ -48,8 +48,8 @@ The CLI will create a directory called `output`, and inside this directory will 
 * A file `results.csv` of the following format:
 
 ``` csv
-"bundle","initial_population","numerator","denominator"
-"<bundle-name>",<true or false>,<true or false>,<true or false>
+"bundle","initial_population","numerator","denominator","error"
+"<bundle-name>",<true or false>,<true or false>,<true or false>,an error message if an error happened
 ```
 
 * Subdirectories for each population, containing the bundles that fell into those populations. **NOTE**: This will not duplicate bundles. E.g. if a patient falls into the numerator, they will only appear in that directory since it is a subset of the other two. Similar reasoning applies to a patient falling into the denominator as it is a subset of the IPOP.
@@ -64,6 +64,9 @@ output
 │   │   ├── a-patient-bundle.json
 │   │   └── ...
 │   ├── numerator
+│   │   ├── a-patient.bundle.json
+│   │   └── ...
+│   ├── errors
 │   │   ├── a-patient.bundle.json
 │   │   └── ...
 │   └── results.csv
