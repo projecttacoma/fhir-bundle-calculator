@@ -101,11 +101,18 @@ const processBundles = async (files) => {
       program.periodEnd,
     );
 
+    const validNumerator = res.numerator && res.initial_population && res.denominator;
+    const validDenominator = res.denominator && res.initial_population;
+    const validIpop = res.initial_population;
+
     // Result includes the Bundle's file name and the booleans for the various populations
     // Used for csv generation
     results.push({
       bundle: bundleId,
-      ...res,
+      initial_population: validIpop,
+      numerator: validNumerator,
+      denominator: validDenominator,
+      error: res.error || '',
     });
 
     // Write the content to the proper directories
@@ -113,13 +120,13 @@ const processBundles = async (files) => {
     if (res.error) {
       console.error(`Error during $cql operation for ${bundlePath}`);
       fs.writeFileSync(`${errorPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
-    } else if (res.numerator) {
+    } else if (validNumerator) {
       console.log(`Wrote bundle ${bundlePath} to ${numerPath}`);
       fs.writeFileSync(`${numerPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
-    } else if (res.denominator) {
+    } else if (validDenominator) {
       console.log(`Wrote bundle ${bundlePath} to ${denomPath}`);
       fs.writeFileSync(`${denomPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
-    } else if (res.initial_population) {
+    } else if (validIpop) {
       console.log(`Wrote bundle ${bundlePath} to ${ipopPath}`);
       fs.writeFileSync(`${ipopPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
     }
