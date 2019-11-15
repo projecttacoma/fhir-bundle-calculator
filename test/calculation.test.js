@@ -181,7 +181,7 @@ test('patient in ipp/denom but not numerator should yield proper booleans', asyn
   expect(result.denominator).toBe(true);
 });
 
-test('illegal cql should yield no population results', async () => {
+test('illegal cql should yield no population results and an error message', async () => {
   nock(MOCK_URL)
     .post('/$cql', getParamsForCQL(ILLEGAL_CQL))
     .reply(200, {
@@ -205,5 +205,8 @@ test('illegal cql should yield no population results', async () => {
     });
 
   const result = await calculate('http://example.com', ILLEGAL_CQL, EXAMPLE_PATIENT_ID, PERIOD_START, PERIOD_END);
-  expect(result).toEqual({});
+  expect(result.initial_population).toBe(null);
+  expect(result.numerator).toBe(null);
+  expect(result.denominator).toBe(null);
+  expect(result.error).toBeDefined();
 });

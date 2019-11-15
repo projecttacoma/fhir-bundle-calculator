@@ -32,9 +32,10 @@ const buildParameters = (cql, patientId, periodStart, periodEnd) => ({
  * @param {string} periodEnd yyyy-mm-dd for the end of the calculation period
  *
  * @returns {object} {
- *   initial_population: true|false,
- *   numerator: true|false,
- *   denominator: true|false
+ *   initial_population: true|false|null,
+ *   numerator: true|false|null,
+ *   denominator: true|false|null,
+ *   error: an error message if an error was encountered
  * }
  */
 const calculate = async (url, cql, patientId, periodStart, periodEnd) => {
@@ -42,16 +43,28 @@ const calculate = async (url, cql, patientId, periodStart, periodEnd) => {
   const response = await axios.post(`${url}/$cql`, parameters);
 
   // Get results for only the definitions that we care about
-  const definitions = ['Initial Population', 'Numerator', 'Denominator'];
+  const definitions = ['Initial Population', 'Numerator', 'Denominator', 'Error'];
   const relevantResults = response.data.entry.filter((e) => _.includes(definitions, e.resource.id));
 
-  const result = {};
+  // Populations will be remain null if an error occurs
+  const result = {
+    initial_population: null,
+    numerator: null,
+    denominator: null,
+  };
+
   relevantResults.forEach((r) => {
     // Only grab the value that the definition returns
     const value = r.resource.parameter.find((p) => p.name === 'value');
+    const populationIdentifier = r.resource.id.toLowerCase().replace(/\s/g, '_');
 
     // NOTE: using === 'true' to get a boolean value from the string that is returned from cqf-ruler
-    if (value) result[r.resource.id.toLowerCase().replace(/\s/g, '_')] = value.valueString === 'true';
+    if (value) result[populationIdentifier] = value.valueString === 'true';
+    // If no value for a given population, we have an error
+    else {
+      const error = r.resource.parameter.find((p) => p.name === 'error');
+      result.error = `Error: ${error.valueString}`;
+    }
   });
 
   return result;
