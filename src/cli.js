@@ -51,13 +51,13 @@ if (!fs.existsSync(outputRoot)) {
 
 // Output for this run is timestamped with the current datetime
 const outputPath = path.join(outputRoot, `/results-${moment().format('YYYY-MM-DD-THHmmss')}`);
-const ippPath = path.join(outputPath, '/ipp');
+const ipopPath = path.join(outputPath, '/ipop');
 const numerPath = path.join(outputPath, '/numerator');
 const denomPath = path.join(outputPath, '/denominator');
 
 // Create subdirectories for timestamped results and sorted populations
 fs.mkdirSync(outputPath);
-fs.mkdirSync(ippPath);
+fs.mkdirSync(ipopPath);
 fs.mkdirSync(numerPath);
 fs.mkdirSync(denomPath);
 
@@ -108,19 +108,16 @@ const processBundles = async (files) => {
 
     // Write the content to the proper directories
     const bundleContent = JSON.stringify(bundle);
-    if (res.initial_population) {
-      console.log(`Wrote bundle ${bundlePath} to ${ippPath}`);
-      fs.writeFileSync(`${ippPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
-    }
 
     if (res.numerator) {
       console.log(`Wrote bundle ${bundlePath} to ${numerPath}`);
       fs.writeFileSync(`${numerPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
-    }
-
-    if (res.denominator) {
+    } else if (res.denominator) {
       console.log(`Wrote bundle ${bundlePath} to ${denomPath}`);
       fs.writeFileSync(`${denomPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+    } else if (res.initial_population) {
+      console.log(`Wrote bundle ${bundlePath} to ${ipopPath}`);
+      fs.writeFileSync(`${ipopPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
     }
 
     // Writes the csv file once we have processed all bundles
