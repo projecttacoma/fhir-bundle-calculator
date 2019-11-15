@@ -52,7 +52,7 @@ The CLI will create a directory called `output`, and inside this directory will 
 "<bundle-name>",<true or false>,<true or false>,<true or false>
 ```
 
-* Subdirectories for each population, containing the bundles that fell into those populations:
+* Subdirectories for each population, containing the bundles that fell into those populations. **NOTE**: This will not duplicate bundles. E.g. if a patient falls into the numerator, they will only appear in that directory since it is a subset of the other two. Similar reasoning applies to a patient falling into the denominator as it is a subset of the IPOP.
 
 ```
 output
@@ -60,7 +60,7 @@ output
 │   ├── denominator
 │   │   ├── a-patient-bundle.json
 │   │   └── ...
-│   ├── ipp
+│   ├── ipop
 │   │   ├── a-patient-bundle.json
 │   │   └── ...
 │   ├── numerator
