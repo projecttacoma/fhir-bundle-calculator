@@ -11,7 +11,29 @@ A CLI for outputting population statistics for FHIR patients and executing CQL f
 
 ## Installation with NPM
 
-Coming soon
+``` bash
+npm install -g fhir-bundle-calculator
+```
+
+Usage:
+
+``` bash
+calculate-bundles [--options]
+```
+
+Available options:
+
+```
+Usage: calculate-bundles -d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd]
+
+Options:
+  -d --directory <input-directory>  Path to directory of Synthea Bundles
+  -c --cql <cql-file>               Path to cql file to be used for calculation
+  -u --url <url>                    Base URL of running cqf-ruler instance
+  -s --period-start <yyyy-mm-dd>    Start of the calculation period (default: "2019-01-01")
+  -e --period-end <yyyy-mm-dd>      End of the calculation period (default: "2019-12-31")
+  -h, --help
+```
 
 ## Local Usage
 
