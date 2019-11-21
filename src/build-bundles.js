@@ -5,6 +5,8 @@
 const fs = require('fs');
 const path = require('path');
 const program = require('commander');
+const cqlDependencyResolver = require('./utils/cqlDependencyResolver')
+const cqlTranslator = require('./utils/cqlTranslator')
 
 // Prints the usage and quits (can also be seen with -h/--help)
 const printHelpAndExit = () => {
@@ -33,5 +35,26 @@ if (!fs.existsSync(program.cql)) {
 
 // Create output folder if it doesn't exist
 if (!fs.existsSync(program.outputDir)) {
-  fs.mkdirSync(outputRoot);
+  fs.mkdirSync(program.outputDir);
 }
+
+
+cqlDependencyResolver.findDependentCQLFiles(program.cql)
+  .catch((e) => {
+    console.error(`Failed to resolve dependencies. ${e.message}`)
+    process.exit(1);
+  })
+  .then((dependentCQLFiles) => {
+    let cqlFiles = [program.cql, ...dependentCQLFiles]
+    console.log(cqlFiles)
+    return cqlTranslator.translateCQLFiles(cqlFiles);
+  })
+  .catch((e) => {
+    console.error(`Failed to translate CQL. ${e}`)
+    process.exit(1);
+  })
+  .then((cqlElmXML) => {
+    console.log('translated to elmxml')
+  })
+  
+
