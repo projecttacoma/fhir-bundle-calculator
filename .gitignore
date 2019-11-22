@@ -1,5 +1,7 @@
 node_modules
 test-bundles
 output
+synthea
+connectathon
 *.csv
 *.cql
