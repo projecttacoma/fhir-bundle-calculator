@@ -12,7 +12,7 @@ make PATIENT_COUNT=20
 
 Refer to the Makefile for individual
 steps if you need to repeat a particular one one-at-a-time. This will put the
-results in _______insert directory here_______
+results in the ./output/ directory
 
 The `patients` directory contains FHIR STU3 bundles of sample patients for
 EXM124, placed in the directory of the population they are in for CQL
