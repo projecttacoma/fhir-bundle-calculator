@@ -23,18 +23,15 @@ seed-cqf-ruler:
   -H 'Content-Type: application/json' \
 	-d @connectathon/resources/fhir3/valuesets/valuesets-bundle-exm124-FHIR.json
 
-setup-synthea: clone-synthea patch-synthea
+setup-synthea: clone-synthea
 
 clone-synthea:
-	git clone https://github.com/synthetichealth/synthea.git
-
-patch-synthea:
-	cp patch/synthea.properties ./synthea/src/main/resources/
-	cp patch/breast_cancer_exm124.json ./synthea/src/main/resources/modules/
+	git clone https://github.com/projecttacoma/synthea.git
+	cd synthea && git checkout exm124
 
 PATIENT_COUNT := 10
 generate-patients:
-	cd synthea && ./run_synthea -a 51-74 -g F -p $(PATIENT_COUNT) -m breast*
+	cd synthea && ./run_synthea -a 51-74 -g F -p $(PATIENT_COUNT) -m breast_cancer_exm124*
 
 CQL_FILE := EXM124_FHIR3-7.2.000.cql
 calculate-patients:
