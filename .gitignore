@@ -3,5 +3,8 @@ test-bundles
 output
 synthea
 connectathon
+.cqf-ruler
+.seed-cqf-ruler
+.setup-cqf-ruper
 *.csv
 *.cql
