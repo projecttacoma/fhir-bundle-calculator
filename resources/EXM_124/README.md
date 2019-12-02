@@ -16,7 +16,7 @@ results in the ./output/ directory
 
 The `patients` directory contains FHIR STU3 bundles of sample patients for
 EXM124, placed in the directory of the population they are in for CQL
-calculation.  Note taht for EXM124, Denominator is equal to Initial Population,
+calculation.  Note that for EXM124, Denominator is equal to Initial Population,
 so there are no patients in the Initial Population but not the Denominator.
 
 The `patch` directory contains modifications to `synthea` that were made in
