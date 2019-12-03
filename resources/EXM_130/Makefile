@@ -30,7 +30,6 @@ clone-synthea:
 
 patch-synthea:
 	cp patch/synthea.properties ./synthea/src/main/resources/
-	cp patch/EXM130.json ./synthea/src/main/resources/modules/
 
 PATIENT_COUNT := 10
 generate-patients:
