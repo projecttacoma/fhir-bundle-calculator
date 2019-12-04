@@ -12,7 +12,7 @@ info:
 	touch .cqf-ruler
 
 connectathon:
-	git clone https://github.com/DBCG/connectathon.git
+	git clone --single-branch --branch master https://github.com/DBCG/connectathon.git
 
 .seed-cqf-ruler:
 	until `curl --output /dev/null --silent --head --fail http://localhost:8080/cqf-ruler-dstu3`; do printf '.'; sleep 5; done
@@ -31,8 +31,7 @@ connectathon:
 	touch .seed-cqf-ruler
 
 synthea:
-	git clone https://github.com/projecttacoma/synthea.git
-	cd synthea && git checkout exm124
+	git clone --single-branch --branch abacus https://github.com/projecttacoma/synthea.git
 
 PATIENT_COUNT := 10
 generate-patients:
