@@ -23,13 +23,10 @@ seed-cqf-ruler:
   -H 'Content-Type: application/json' \
 	-d @connectathon/resources/fhir3/valuesets/valuesets-bundle-exm130-FHIR.json
 
-setup-synthea: clone-synthea patch-synthea
+setup-synthea: clone-synthea
 
 clone-synthea:
-	git clone https://github.com/synthetichealth/synthea.git
-
-patch-synthea:
-	cp patch/synthea.properties ./synthea/src/main/resources/
+	git clone https://github.com/projecttacoma/synthea.git
 
 PATIENT_COUNT := 10
 generate-patients:
