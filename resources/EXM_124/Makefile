@@ -12,22 +12,24 @@ info:
 	touch .cqf-ruler
 
 connectathon:
-	git clone --single-branch --branch master https://github.com/DBCG/connectathon.git
+	$(info connectathon checks out a specific commit SHA in case filepaths are updated)
+	git clone https://github.com/DBCG/connectathon.git
+	cd connectathon && git checkout 425795fb8dd39e213140493f22e77880a9257f00
 
 .seed-cqf-ruler:
 	until `curl --output /dev/null --silent --head --fail http://localhost:8080/cqf-ruler-dstu3`; do printf '.'; sleep 5; done
 	curl -X POST \
   http://localhost:8080/cqf-ruler-dstu3/fhir/Measure \
   -H 'Content-Type: application/json' \
-	-d @connectathon/resources/fhir3/measure/measure-exm124-FHIR.json
+	-d @connectathon/fhir3/resources/measure/measure-EXM124_FHIR3-7.2.000.json
 	curl -X POST \
   http://localhost:8080/cqf-ruler-dstu3/fhir \
   -H 'Content-Type: application/json' \
-	-d @connectathon/resources/fhir3/library/all-libraries-bundle.json
+	-d @connectathon/fhir3/resources/library/all-libraries-bundle.json
 	curl -X POST \
   http://localhost:8080/cqf-ruler-dstu3/fhir \
   -H 'Content-Type: application/json' \
-	-d @connectathon/resources/fhir3/valuesets/valuesets-bundle-exm124-FHIR.json
+	-d @connectathon/fhir3/resources/valuesets/valuesets-EXM124_FHIR3-7.2.000.json
 	touch .seed-cqf-ruler
 
 synthea:
