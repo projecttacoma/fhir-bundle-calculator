@@ -1,5 +1,7 @@
 # FHIR-bundle-calculator
 
+[![Build Status](https://travis-ci.com/projecttacoma/fhir-bundle-calculator.svg?branch=master)](https://travis-ci.com/projecttacoma/fhir-bundle-calculator)
+
 A CLI for outputting population statistics for FHIR patients and executing CQL from an eCQM using the `$cql` operation of the [cqf-ruler](https://github.com/DBCG/cqf-ruler) HAPI FHIR server
 
 # Usage
@@ -93,6 +95,17 @@ output
 │   │   └── ...
 │   └── results.csv
 └──
+```
+
+### Epsiode of Care Measures
+
+The cli will be able to detect if the provided CQL represents an Episode of Care measure by inspecting the return types for the various populations. Populations with a return type of `List` will be treated as Episode of Care, as they will contain a FHIR bundle with the relevant resources.
+
+In this case, the above output is mostly the same, but columns will be added that correspond to the number of episodes that fell into the relevant populations for the patient bundle in question:
+
+``` csv
+"bundle","initial_population","numerator","denominator","initial_population_episodes","denominator_episodes","numerator_episodes","error"
+"<bundle-name>",<true or false>,<true or false>,<true or false>,<count>,<count>,<count>,an error message if an error happened
 ```
 
 ## Unit Testing
