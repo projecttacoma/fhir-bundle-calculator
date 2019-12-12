@@ -22,6 +22,12 @@ const buildParameters = (cql, patientId, periodStart, periodEnd) => ({
   }],
 });
 
+// Get the return type and return value for relevant cql definitions
+const getValueAndType = (results) => ({
+  value: results.find((p) => p.name === 'value'),
+  valueType: results.find((p) => p.name === 'resultType'),
+});
+
 /**
  * Use the $cql operation to process calculation results
  *
@@ -55,13 +61,27 @@ const calculate = async (url, cql, patientId, periodStart, periodEnd) => {
 
   relevantResults.forEach((r) => {
     // Only grab the value that the definition returns
-    const value = r.resource.parameter.find((p) => p.name === 'value');
+    const { value, valueType } = getValueAndType(r.resource.parameter);
     const populationIdentifier = r.resource.id.toLowerCase().replace(/\s/g, '_');
 
-    // NOTE: using === 'true' to get a boolean value from the string that is returned from cqf-ruler
-    if (value) result[populationIdentifier] = value.valueString === 'true';
-    // If no value for a given population, we have an error
-    else {
+    if (value) {
+      if (valueType.valueString === 'Boolean') {
+        // NOTE: using === 'true' to get a boolean value from the returned string
+        result[populationIdentifier] = value.valueString === 'true';
+      } else if (valueType.valueString === 'List') {
+        // For a List return type in episode of care measures, we want a non-zero
+        // amount of episodes for this patient
+        const numEpisodes = value.resource.entry.length;
+        result[populationIdentifier] = value.valueString !== '[]' && numEpisodes > 0;
+
+        // Add a column for number of episodes in the population for episode of care measures
+        if (!result.counts) {
+          result.counts = {};
+        }
+        result.counts[`${populationIdentifier}_episodes`] = numEpisodes;
+      }
+    } else {
+      // If no value for a given population, we have an error
       const error = r.resource.parameter.find((p) => p.name === 'error');
       result.error = `Error: ${error.valueString}`;
     }

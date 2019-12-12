@@ -105,15 +105,32 @@ const processBundles = async (files) => {
     const validDenominator = res.denominator && res.initial_population;
     const validIpop = res.initial_population;
 
-    // Result includes the Bundle's file name and the booleans for the various populations
-    // Used for csv generation
-    results.push({
+    // Inialize csv row with relevant booleans
+    let row = {
       bundle: bundleId,
       initial_population: validIpop,
       numerator: validNumerator,
       denominator: validDenominator,
-      error: res.error || '',
-    });
+    };
+
+    // Episode of care measure will have counts for each population. Add those to the csv
+    if (res.counts) {
+      row = {
+        ...row,
+        ...res.counts,
+      };
+    }
+
+    // Add a column for cql errors if they occurred
+    if (res.error) {
+      row = {
+        ...row,
+        error: res.error,
+      };
+    }
+
+    // Used for csv generation
+    results.push(row);
 
     // Write the content to the proper directories
     const bundleContent = JSON.stringify(bundle);
