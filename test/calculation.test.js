@@ -267,11 +267,7 @@ test('episode of care measure should contain episode counts', async () => {
           },
           {
             name: 'value',
-            resource: {
-              resourceType: 'Bundle',
-              type: 'collection',
-              entry: [],
-            },
+            valueString: '[]',
           }, {
             name: 'resultType',
             valueString: 'List',
@@ -287,11 +283,7 @@ test('episode of care measure should contain episode counts', async () => {
             valueString: '[118:1]',
           }, {
             name: 'value',
-            resource: {
-              resourceType: 'Bundle',
-              type: 'collection',
-              entry: [],
-            },
+            valueString: '[]',
           }, {
             name: 'resultType',
             valueString: 'List',
