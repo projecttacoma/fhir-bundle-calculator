@@ -71,8 +71,9 @@ const calculate = async (url, cql, patientId, periodStart, periodEnd) => {
       } else if (valueType.valueString === 'List') {
         // For a List return type in episode of care measures, we want a non-zero
         // amount of episodes for this patient
-        const numEpisodes = value.resource.entry.length;
-        result[populationIdentifier] = value.valueString !== '[]' && numEpisodes > 0;
+        const isEmptyPopulation = value.valueString === '[]';
+        const numEpisodes = isEmptyPopulation ? 0 : value.resource.entry.length;
+        result[populationIdentifier] = numEpisodes > 0;
 
         // Add a column for number of episodes in the population for episode of care measures
         if (!result.counts) {
