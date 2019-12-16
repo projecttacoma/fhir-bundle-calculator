@@ -19,7 +19,8 @@
     "commander": "^4.0.1",
     "json2csv": "^4.5.4",
     "lodash": "^4.17.15",
-    "moment": "^2.24.0"
+    "moment": "^2.24.0",
+    "winston": "^3.2.1"
   },
   "devDependencies": {
     "eslint": "^6.6.0",
