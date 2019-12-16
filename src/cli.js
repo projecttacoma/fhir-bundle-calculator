@@ -82,6 +82,14 @@ const bundleFiles = fs.readdirSync(program.directory).filter((f) => path.extname
 logger.debug('reading CQL file');
 const cql = fs.readFileSync(program.cql, 'utf8');
 const results = [];
+const resultCounts = {
+  ipop: 0,
+  numerator: 0,
+  denominator: 0,
+  none: 0,
+  errors: 0,
+  total: 0,
+};
 
 const processBundles = async (files) => {
   // Notes: Need to use for ... of ... to allow loop to halt until we get a response from the server
@@ -131,8 +139,8 @@ const processBundles = async (files) => {
 
     // Episode of care measure will have counts for each population. Add those to the csv
     if (res.counts) {
-      logger.debug('found episode of care measure');
-      logger.debug('adding episode count row');
+      logger.info('found episode of care measure');
+      logger.debug('adding episode of care columns');
       row = {
         ...row,
         ...res.counts,
@@ -141,6 +149,7 @@ const processBundles = async (files) => {
 
     // Add a column for cql errors if they occurred
     if (res.error) {
+      logger.debug('adding error column');
       row = {
         ...row,
         error: res.error,
@@ -155,23 +164,39 @@ const processBundles = async (files) => {
     if (res.error) {
       logger.error(`Error during $cql operation for ${bundlePath}`);
       fs.writeFileSync(`${errorPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+      resultCounts.errors += 1;
     } else if (validNumerator) {
       logger.info(`Wrote bundle ${bundlePath} to ${numerPath}`);
       fs.writeFileSync(`${numerPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+      resultCounts.numerator += 1;
     } else if (validDenominator) {
       logger.info(`Wrote bundle ${bundlePath} to ${denomPath}`);
       fs.writeFileSync(`${denomPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+      resultCounts.denominator += 1;
     } else if (validIpop) {
       logger.info(`Wrote bundle ${bundlePath} to ${ipopPath}`);
       fs.writeFileSync(`${ipopPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+      resultCounts.ipop += 1;
     } else {
       logger.info(`No population results for ${bundlePath}`);
+      resultCounts.none += 1;
     }
+    resultCounts.total += 1;
 
     // Writes the csv file once we have processed all bundles
     if (results.length === bundleFiles.length) {
       fs.writeFileSync(outputFile, parse(results), 'utf8');
       logger.info(`Wrote csv output to ${outputFile}`);
+      logger.info(`
+        Final Counts:
+          - Numerator: ${resultCounts.numerator}
+          - Denominator: ${resultCounts.denominator}
+          - IPOP: ${resultCounts.ipop}
+          - No Population: ${resultCounts.none}
+          - Errors: ${resultCounts.errors}
+          --------------------
+          - Total: ${resultCounts.total}
+      `);
     }
   }
 };
