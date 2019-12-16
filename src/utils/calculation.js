@@ -80,6 +80,7 @@ const calculate = async (url, cql, patientId, periodStart, periodEnd) => {
           result.counts = {};
         }
         result.counts[`${populationIdentifier}_episodes`] = numEpisodes;
+        result.counts[`${populationIdentifier}_episodeIDs`] = isEmptyPopulation ? [] : value.resource.entry.map((e) => e.resource.id);
       }
     } else {
       // If no value for a given population, we have an error

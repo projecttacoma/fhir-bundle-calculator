@@ -101,11 +101,11 @@ output
 
 The cli will be able to detect if the provided CQL represents an Episode of Care measure by inspecting the return types for the various populations. Populations with a return type of `List` will be treated as Episode of Care, as they will contain a FHIR bundle with the relevant resources.
 
-In this case, the above output is mostly the same, but columns will be added that correspond to the number of episodes that fell into the relevant populations for the patient bundle in question:
+In this case, the above output is mostly the same, but columns will be added that correspond to the number of episodes that fell into the relevant populations for the patient bundle in question, as well as a list of IDs for the episode:
 
 ``` csv
-"bundle","initial_population","numerator","denominator","initial_population_episodes","denominator_episodes","numerator_episodes","error"
-"<bundle-name>",<true or false>,<true or false>,<true or false>,<count>,<count>,<count>,an error message if an error happened
+"bundle","initial_population","numerator","denominator","initial_population_episodes","initial_population_episodeIds","denominator_episodes","denominator_episodeIds","numerator_episodes","numerator_episodeIds","error"
+"<bundle-name>",<true or false>,<true or false>,<true or false>,<count>,<list>,<count>,<list>,<count>,<list>,an error message if an error happened
 ```
 
 ## Unit Testing

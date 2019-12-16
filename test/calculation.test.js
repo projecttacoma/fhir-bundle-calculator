@@ -249,7 +249,13 @@ test('episode of care measure should contain episode counts', async () => {
             resource: {
               resourceType: 'Bundle',
               type: 'collection',
-              entry: [0, 1, 2, 3, 4],
+              entry: [
+                { resourceType: 'Encounter', resource: { id: 0 } },
+                { resourceType: 'Encounter', resource: { id: 1 } },
+                { resourceType: 'Encounter', resource: { id: 2 } },
+                { resourceType: 'Encounter', resource: { id: 3 } },
+                { resourceType: 'Encounter', resource: { id: 4 } },
+              ],
             },
           }, {
             name: 'resultType',
@@ -308,6 +314,9 @@ test('episode of care measure should contain episode counts', async () => {
   // Since this is an Episode of Care measure, we should have a counts field in the result
   expect(result.counts).toBeDefined();
   expect(result.counts.initial_population_episodes).toBe(5);
+  expect(result.counts.initial_population_episodeIDs).toEqual([0, 1, 2, 3, 4]);
   expect(result.counts.numerator_episodes).toBe(0);
+  expect(result.counts.numerator_episodeIDs).toEqual([]);
   expect(result.counts.denominator_episodes).toBe(0);
+  expect(result.counts.denominator_episodeIDs).toEqual([]);
 });
