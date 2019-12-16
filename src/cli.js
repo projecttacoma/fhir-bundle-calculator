@@ -13,6 +13,7 @@ const { parse } = require('json2csv');
 const path = require('path');
 const program = require('commander');
 const moment = require('moment');
+const winston = require('winston');
 const { calculate } = require('./utils/calculation');
 
 // Prints the usage and quits (can also be seen with -h/--help)
@@ -27,25 +28,34 @@ program
   .option('-u --url <url>', 'Base URL of running cqf-ruler instance')
   .option('-s --period-start <yyyy-mm-dd>', 'Start of the calculation period', '2019-01-01')
   .option('-e --period-end <yyyy-mm-dd>', 'End of the calculation period', '2019-12-31')
+  .option('-v --verbose', 'Enable debug logging', false)
   .usage('-d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd]')
   .parse(process.argv);
 
+const logger = winston.createLogger({
+  level: program.verbose ? 'debug' : 'info',
+  format: winston.format.cli(),
+  transports: [
+    new winston.transports.Console(),
+  ],
+});
 
 // Enforce required parameters
 if (!program.directory || !program.url || !program.cql) {
-  console.error('-d/--directory, -u/--url, and -c/--cql are required');
+  logger.error('-d/--directory, -u/--url, and -c/--cql are required');
   printHelpAndExit();
 }
 
 // We expect the directory containing the bundles to already exist
 if (!fs.existsSync(program.directory)) {
-  console.error(`Cannot find directory ${program.directory}\n`);
+  logger.error(`Cannot find directory ${program.directory}\n`);
   printHelpAndExit();
 }
 
 // Create output directory if it doesn't exist
 const outputRoot = './output';
 if (!fs.existsSync(outputRoot)) {
+  logger.debug('creating output directory');
   fs.mkdirSync(outputRoot);
 }
 
@@ -57,6 +67,7 @@ const denomPath = path.join(outputPath, '/denominator');
 const errorPath = path.join(outputPath, '/errors');
 
 // Create subdirectories for timestamped results and sorted populations
+logger.debug('creating population directories');
 fs.mkdirSync(outputPath);
 fs.mkdirSync(ipopPath);
 fs.mkdirSync(numerPath);
@@ -66,7 +77,9 @@ fs.mkdirSync(errorPath);
 const outputFile = `${outputPath}/results.csv`;
 
 // Read in bundles and cql
+logger.debug('reading bundles');
 const bundleFiles = fs.readdirSync(program.directory).filter((f) => path.extname(f) === '.json');
+logger.debug('reading CQL file');
 const cql = fs.readFileSync(program.cql, 'utf8');
 const results = [];
 
@@ -76,12 +89,13 @@ const processBundles = async (files) => {
   for (const file of files) {
     const bundlePath = path.join(path.resolve(program.directory), file);
     const bundleId = path.basename(bundlePath, '.json');
+    logger.debug('parsing patient bundle');
     const bundle = JSON.parse(fs.readFileSync(bundlePath, 'utf8'));
 
     // POST bundle to the server
     let postBundleResponse;
     try {
-      console.log(`Posting bundle ${bundlePath}`);
+      logger.info(`Posting bundle ${bundlePath}`);
       postBundleResponse = await axios.post(program.url, bundle);
     } catch (e) {
       throw new Error(`Failed to post bundle:\n\n${e.message}`);
@@ -92,7 +106,9 @@ const processBundles = async (files) => {
 
     // ID will be of format Patient/<something>
     const patientId = patientLoc.split('/')[1];
+    logger.debug('found generated patient ID');
 
+    logger.info(`running calculation on Patient ${patientId}`);
     const res = await calculate(
       program.url,
       cql,
@@ -115,6 +131,8 @@ const processBundles = async (files) => {
 
     // Episode of care measure will have counts for each population. Add those to the csv
     if (res.counts) {
+      logger.debug('found episode of care measure');
+      logger.debug('adding episode count row');
       row = {
         ...row,
         ...res.counts,
@@ -135,23 +153,25 @@ const processBundles = async (files) => {
     // Write the content to the proper directories
     const bundleContent = JSON.stringify(bundle);
     if (res.error) {
-      console.error(`Error during $cql operation for ${bundlePath}`);
+      logger.error(`Error during $cql operation for ${bundlePath}`);
       fs.writeFileSync(`${errorPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
     } else if (validNumerator) {
-      console.log(`Wrote bundle ${bundlePath} to ${numerPath}`);
+      logger.info(`Wrote bundle ${bundlePath} to ${numerPath}`);
       fs.writeFileSync(`${numerPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
     } else if (validDenominator) {
-      console.log(`Wrote bundle ${bundlePath} to ${denomPath}`);
+      logger.info(`Wrote bundle ${bundlePath} to ${denomPath}`);
       fs.writeFileSync(`${denomPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
     } else if (validIpop) {
-      console.log(`Wrote bundle ${bundlePath} to ${ipopPath}`);
+      logger.info(`Wrote bundle ${bundlePath} to ${ipopPath}`);
       fs.writeFileSync(`${ipopPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+    } else {
+      logger.info(`No population results for ${bundlePath}`);
     }
 
     // Writes the csv file once we have processed all bundles
     if (results.length === bundleFiles.length) {
       fs.writeFileSync(outputFile, parse(results), 'utf8');
-      console.log(`Wrote csv output to ${outputFile}`);
+      logger.info(`Wrote csv output to ${outputFile}`);
     }
   }
 };

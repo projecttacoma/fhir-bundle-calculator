@@ -34,6 +34,7 @@ Options:
   -u --url <url>                    Base URL of running cqf-ruler instance
   -s --period-start <yyyy-mm-dd>    Start of the calculation period (default: "2019-01-01")
   -e --period-end <yyyy-mm-dd>      End of the calculation period (default: "2019-12-31")
+  -v --verbose                      Enable debug logging (default: false)
   -h, --help
 ```
 
@@ -62,6 +63,7 @@ Options:
   -u --url <url>                    Base URL of running cqf-ruler instance
   -s --period-start <yyyy-mm-dd>    Start of the calculation period (default: "2019-01-01")
   -e --period-end <yyyy-mm-dd>      End of the calculation period (default: "2019-12-31")
+  -v --verbose                      Enable debug logging (default: false)
   -h, --help                        output usage information
 ```
 
