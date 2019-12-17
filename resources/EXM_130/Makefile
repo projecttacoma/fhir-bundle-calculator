@@ -13,34 +13,34 @@ info:
 
 connectathon:
 	$(info connectathon checks out a specific commit SHA in case filepaths are updated)
-	git clone https://github.com/DBCG/connectathon.git
-	cd connectathon && git checkout 425795fb8dd39e213140493f22e77880a9257f00
+	git clone --depth=1 https://github.com/DBCG/connectathon.git
+	cd connectathon
 
 .seed-cqf-ruler:
-	until `curl --output /dev/null --silent --head --fail http://localhost:8080/cqf-ruler-dstu3`; do printf '.'; sleep 5; done
+	until `curl --output /dev/null --silent --head --fail http://localhost:8080/cqf-ruler-r4`; do printf '.'; sleep 5; done
 	curl -X POST \
-  http://localhost:8080/cqf-ruler-dstu3/fhir/ \
+  http://localhost:8080/cqf-ruler-r4/fhir/ \
   -H 'Content-Type: application/json' \
-	-d @EXM_130_bundle.json
+	-d @connectathon/fhir4/bundles/EXM130_FHIR4-7.2.000/EXM130_FHIR4-7.2.000-files/library-deps-EXM130_FHIR4-7.2.000-bundle.json
 	curl -X POST \
-  http://localhost:8080/cqf-ruler-dstu3/fhir \
+  http://localhost:8080/cqf-ruler-r4/fhir/ \
   -H 'Content-Type: application/json' \
-	-d @connectathon/fhir3/resources/library/all-libraries-bundle.json
+	-d @connectathon/fhir4/bundles/EXM130_FHIR4-7.2.000/EXM130_FHIR4-7.2.000-bundle.json
 	curl -X POST \
-  http://localhost:8080/cqf-ruler-dstu3/fhir \
+  http://localhost:8080/cqf-ruler-r4/fhir/ \
   -H 'Content-Type: application/json' \
-	-d @connectathon/fhir3/resources/valuesets/valuesets-EXM130_FHIR3-7.2.000.json
+	-d @connectathon/fhir4/bundles/EXM130_FHIR4-7.2.000/EXM130_FHIR4-7.2.000-files/valuesets-EXM130_FHIR4-7.2.000-bundle.json
 
 synthea:
-	git clone --single-branch --branch abacus https://github.com/projecttacoma/synthea.git
+	git clone --single-branch --branch abacus_r4 --depth=1 https://github.com/projecttacoma/synthea.git
 
 PATIENT_COUNT := 10
 generate-patients:
 	cd synthea && ./run_synthea -a 51-51 -p $(PATIENT_COUNT) -m EXM130*
 
-CQL_FILE := EXM130_FHIR3.cql
+CQL_FILE := EXM130_FHIR4.cql
 calculate-patients:
-	calculate-bundles -d ./synthea/output/fhir_stu3 -c $(CQL_FILE) -u http://localhost:8080/cqf-ruler-dstu3/fhir
+	calculate-bundles -d ./synthea/output/fhir -c $(CQL_FILE) -u http://localhost:8080/cqf-ruler-r4/fhir
 
 clean:
 	-docker stop cqf-ruler
