@@ -12,36 +12,26 @@ info:
 	touch .cqf-ruler
 
 connectathon:
-	$(info connectathon checks out a specific commit SHA in case filepaths are updated)
-	git clone https://github.com/DBCG/connectathon.git
-	cd connectathon && git checkout 425795fb8dd39e213140493f22e77880a9257f00
+	git clone --depth=1 https://github.com/DBCG/connectathon.git
+	cd connectathon
 
 .seed-cqf-ruler:
-	until `curl --output /dev/null --silent --head --fail http://localhost:8080/cqf-ruler-dstu3`; do printf '.'; sleep 5; done
+	until `curl --output /dev/null --silent --head --fail http://localhost:8080/cqf-ruler-r4`; do printf '.'; sleep 5; done
 	curl -X POST \
-  http://localhost:8080/cqf-ruler-dstu3/fhir/Measure \
+  http://localhost:8080/cqf-ruler-r4/fhir/ \
   -H 'Content-Type: application/json' \
-	-d @connectathon/fhir3/resources/measure/measure-EXM124_FHIR3-7.2.000.json
-	curl -X POST \
-  http://localhost:8080/cqf-ruler-dstu3/fhir \
-  -H 'Content-Type: application/json' \
-	-d @connectathon/fhir3/resources/library/all-libraries-bundle.json
-	curl -X POST \
-  http://localhost:8080/cqf-ruler-dstu3/fhir \
-  -H 'Content-Type: application/json' \
-	-d @connectathon/fhir3/resources/valuesets/valuesets-EXM124_FHIR3-7.2.000.json
-	touch .seed-cqf-ruler
+	-d @EXM124_FHIR4-8.2.000-bundle.json
 
 synthea:
-	git clone --single-branch --branch abacus https://github.com/projecttacoma/synthea.git
+	git clone --single-branch --branch abacus_r4 --depth=1 https://github.com/projecttacoma/synthea.git
 
 PATIENT_COUNT := 10
 generate-patients:
 	cd synthea && ./run_synthea -a 51-74 -g F -p $(PATIENT_COUNT) -m breast_cancer_exm124*
 
-CQL_FILE := EXM124_FHIR3-7.2.000.cql
+CQL_FILE := EXM124_FHIR4-8.2.000.cql
 calculate-patients:
-	calculate-bundles -d ./synthea/output/fhir_stu3 -c $(CQL_FILE) -u http://localhost:8080/cqf-ruler-dstu3/fhir -s "2018-01-01" -e "2018-12-31"
+	calculate-bundles -d ./synthea/output/fhir -c $(CQL_FILE) -u http://localhost:8080/cqf-ruler-r4/fhir -s "2018-01-01" -e "2018-12-31"
 
 clean:
 	-docker stop cqf-ruler
