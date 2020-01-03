@@ -45,7 +45,7 @@ connectathon:
 	touch .seed-cqf-ruler
 
 synthea:
-	git clone --single-branch --branch exm_104 --depth 1 https://github.com/projecttacoma/synthea.git
+	git clone --single-branch --branch abacus --depth 1 https://github.com/projecttacoma/synthea.git
 
 PATIENT_COUNT := 10
 generate-patients:
