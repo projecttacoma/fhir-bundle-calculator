@@ -60,4 +60,3 @@ clean:
 	-rm -rf synthea output connectathon .cqf-ruler .seed-cqf-ruler .generate-patients .calculate-patients .setup-cqf-ruler
 
 .PHONY: all clean info
-.SECONDARY: main-build
