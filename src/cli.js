@@ -25,11 +25,12 @@ const printHelpAndExit = () => {
 program
   .option('-d --directory <input-directory>', 'Path to directory of Synthea Bundles')
   .option('-c --cql <cql-file>', 'Path to cql file to be used for calculation')
-  .option('-u --url <url>', 'Base URL of running cqf-ruler instance')
+  .option('-m --measure-id <measure-id>', 'Measure ID to evaluate')
+  .option('-u --url <url>', 'Base URL of running cqf-ruler instance', 'http://localhost:8080/cqf-ruler-dstu3/fhir')
   .option('-s --period-start <yyyy-mm-dd>', 'Start of the calculation period', '2019-01-01')
   .option('-e --period-end <yyyy-mm-dd>', 'End of the calculation period', '2019-12-31')
   .option('-v --verbose', 'Enable debug logging', false)
-  .usage('-d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd]')
+  .usage('-d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd -m <measure-id> -v]')
   .parse(process.argv);
 
 const logger = winston.createLogger({
@@ -91,6 +92,8 @@ const resultCounts = {
   total: 0,
 };
 
+const client = axios.create({ baseURL: program.url });
+
 const processBundles = async (files) => {
   // Notes: Need to use for ... of ... to allow loop to halt until we get a response from the server
   // eslint-disable-next-line no-restricted-syntax
@@ -104,7 +107,7 @@ const processBundles = async (files) => {
     let postBundleResponse;
     try {
       logger.info(`Posting bundle ${bundlePath}`);
-      postBundleResponse = await axios.post(program.url, bundle);
+      postBundleResponse = await client.post('/', bundle);
     } catch (e) {
       throw new Error(`Failed to post bundle:\n\n${e.message}`);
     }
@@ -182,12 +185,12 @@ const processBundles = async (files) => {
       resultCounts.none += 1;
     }
     resultCounts.total += 1;
+  }
 
-    // Writes the csv file once we have processed all bundles
-    if (results.length === bundleFiles.length) {
-      fs.writeFileSync(outputFile, parse(results), 'utf8');
-      logger.info(`Wrote csv output to ${outputFile}`);
-      logger.info(`
+  // Write .csv results to file
+  fs.writeFileSync(outputFile, parse(results), 'utf8');
+  logger.info(`Wrote csv output to ${outputFile}`);
+  logger.info(`
         Final Counts:
           - Numerator: ${resultCounts.numerator}
           - Denominator: ${resultCounts.denominator}
@@ -197,6 +200,16 @@ const processBundles = async (files) => {
           --------------------
           - Total: ${resultCounts.total}
       `);
+
+  // Get a patient-list MeasureReport from cqf-ruler
+  if (program.measureId) {
+    try {
+      logger.info('Generating patient-list MeasureReport');
+      const mrResp = await client.get(`/Measure/${program.measureId}/$evaluate-measure?reportType=patient-list&periodStart=${program.periodStart}&periodEnd=${program.periodEnd}`);
+      fs.writeFileSync(`${outputPath}/measure-report.json`, JSON.stringify(mrResp.data), 'utf8');
+      logger.info(`Wrote measure-report to ${outputPath}/measure-report.json`);
+    } catch (e) {
+      logger.error(`Error generating MeasureReport: ${e.message}`);
     }
   }
 };
