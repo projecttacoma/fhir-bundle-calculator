@@ -7,3 +7,4 @@ connectathon
 .seed-cqf-ruler
 .setup-cqf-ruler
 *.csv
+.DS_Store
