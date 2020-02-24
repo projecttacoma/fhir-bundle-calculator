@@ -33,7 +33,7 @@ calculate-bundles [--options]
 Available options:
 
 ```
-Usage: cli -d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd -m <measure-id>]
+Usage: calculate-bundles -d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd -m <measure-id>]
 
 Options:
   -v --version                      Print the current version
@@ -43,7 +43,7 @@ Options:
   -u --url <url>                    Base URL of running cqf-ruler instance (default: "http://localhost:8080/cqf-ruler-r4/fhir")
   -s --period-start <yyyy-mm-dd>    Start of the calculation period (default: "2019-01-01")
   -e --period-end <yyyy-mm-dd>      End of the calculation period (default: "2019-12-31")
-  -h, --help                        output usage information
+  -h, --help                        Output usage information
 ```
 
 ## Local Usage
@@ -104,7 +104,7 @@ In this case, the above output is mostly the same, but columns will be added tha
 
 ## Debugging
 
-Some initial logging is done for the CLI, but more verbose logging can  be done by setting `DEBUG=true` in the environment. 
+Some initial logging is done for the CLI, but more verbose logging can be done by setting `DEBUG=true` in the environment. 
 
 Example:
 ``` bash

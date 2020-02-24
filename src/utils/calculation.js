@@ -49,7 +49,6 @@ const calculate = async (url, cql, patientId, periodStart, periodEnd) => {
   const parameters = buildParameters(cql, patientId, periodStart, periodEnd);
   const response = await axios.post(`${url}/$cql`, parameters);
 
-  // Log cql response to a file
   logger.debug('Logging $cql response to cql-responses.log');
   fileLogger.info(response.data);
 
