@@ -19,13 +19,13 @@ const { logger } = require('./utils/logger');
 const { calculate } = require('./utils/calculation');
 
 program
-  .version('2.0.0', '-v --version', 'Print the current version')
-  .option('-d --directory <input-directory>', 'Path to directory of Synthea Bundles')
-  .option('-c --cql <cql-file>', 'Path to cql file to be used for calculation')
-  .option('-m --measure-id <measure-id>', 'Measure ID to evaluate')
-  .option('-u --url <url>', 'Base URL of running cqf-ruler instance', 'http://localhost:8080/cqf-ruler-r4/fhir')
-  .option('-s --period-start <yyyy-mm-dd>', 'Start of the calculation period', '2019-01-01')
-  .option('-e --period-end <yyyy-mm-dd>', 'End of the calculation period', '2019-12-31')
+  .version('2.0.0', '-v, --version', 'print the current version')
+  .option('-d, --directory <input-directory>', 'path to directory of Synthea Bundles')
+  .option('-c, --cql <cql-file>', 'path to cql file to be used for calculation')
+  .option('-m, --measure-id <measure-id>', 'measure ID to evaluate')
+  .option('-u, --url <url>', 'base URL of running cqf-ruler instance', 'http://localhost:8080/cqf-ruler-r4/fhir')
+  .option('-s, --period-start <yyyy-mm-dd>', 'start of the calculation period', '2019-01-01')
+  .option('-e, --period-end <yyyy-mm-dd>', 'end of the calculation period', '2019-12-31')
   .usage('-d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd -m <measure-id>]')
   .parse(process.argv);
 
