@@ -1,5 +1,6 @@
 const axios = require('axios');
 const _ = require('lodash');
+const { logger, fileLogger } = require('./logger');
 
 // Assembles the payload for the $cql operation supported by cqf-ruler
 const buildParameters = (cql, patientId, periodStart, periodEnd) => ({
@@ -41,12 +42,16 @@ const getValueAndType = (results) => ({
  *   initial_population: true|false|null,
  *   numerator: true|false|null,
  *   denominator: true|false|null,
- *   error: an error message if an error was encountered
  * }
  */
 const calculate = async (url, cql, patientId, periodStart, periodEnd) => {
+  logger.debug('Building $cql parameters');
   const parameters = buildParameters(cql, patientId, periodStart, periodEnd);
   const response = await axios.post(`${url}/$cql`, parameters);
+
+  // Log cql response to a file
+  logger.debug('Logging $cql response to cql-responses.log');
+  fileLogger.info(response.data);
 
   // Get results for only the definitions that we care about
   const definitions = ['Initial Population', 'Numerator', 'Denominator', 'Error'];
@@ -85,7 +90,8 @@ const calculate = async (url, cql, patientId, periodStart, periodEnd) => {
     } else {
       // If no value for a given population, we have an error
       const error = r.resource.parameter.find((p) => p.name === 'error');
-      result.error = `Error: ${error.valueString}`;
+      logger.error(`CQL Error: ${error.valueString}`);
+      process.exit(1);
     }
   });
 

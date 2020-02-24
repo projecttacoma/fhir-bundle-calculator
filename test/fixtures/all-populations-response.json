@@ -1,0 +1,69 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "fullUrl": "Initial Population",
+      "resource": {
+        "resourceType": "Parameters",
+        "id": "Initial Population",
+        "parameter": [
+          {
+            "name": "location",
+            "valueString": "[1:1]"
+          },
+          {
+            "name": "value",
+            "valueString": "true"
+          },
+          {
+            "name": "resultType",
+            "valueString": "Boolean"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "Numerator",
+      "resource": {
+        "resourceType": "Parameters",
+        "id": "Numerator",
+        "parameter": [
+          {
+            "name": "location",
+            "valueString": "[4:1]"
+          },
+          {
+            "name": "value",
+            "valueString": "true"
+          },
+          {
+            "name": "resultType",
+            "valueString": "Boolean"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "Denominator",
+      "resource": {
+        "resourceType": "Parameters",
+        "id": "Denominator",
+        "parameter": [
+          {
+            "name": "location",
+            "valueString": "[7:1]"
+          },
+          {
+            "name": "value",
+            "valueString": "true"
+          },
+          {
+            "name": "resultType",
+            "valueString": "Boolean"
+          }
+        ]
+      }
+    }
+  ]
+}

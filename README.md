@@ -17,6 +17,13 @@ A CLI for outputting population statistics for FHIR patients and executing CQL f
 npm install -g fhir-bundle-calculator
 ```
 
+Installation can be verified with the `--version` flag:
+
+```bash
+calculate-bundles --version
+X.Y.Z
+```
+
 Usage:
 
 ``` bash
@@ -26,16 +33,17 @@ calculate-bundles [--options]
 Available options:
 
 ```
-Usage: calculate-bundles -d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd]
+Usage: cli -d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd -m <measure-id>]
 
 Options:
+  -v --version                      Print the current version
   -d --directory <input-directory>  Path to directory of Synthea Bundles
   -c --cql <cql-file>               Path to cql file to be used for calculation
-  -u --url <url>                    Base URL of running cqf-ruler instance
+  -m --measure-id <measure-id>      Measure ID to evaluate
+  -u --url <url>                    Base URL of running cqf-ruler instance (default: "http://localhost:8080/cqf-ruler-r4/fhir")
   -s --period-start <yyyy-mm-dd>    Start of the calculation period (default: "2019-01-01")
   -e --period-end <yyyy-mm-dd>      End of the calculation period (default: "2019-12-31")
-  -v --verbose                      Enable debug logging (default: false)
-  -h, --help
+  -h, --help                        output usage information
 ```
 
 ## Local Usage
@@ -52,20 +60,7 @@ This will pull the source code and install the necessary dependencies. You can r
 node src/cli.js [--options]
 ```
 
-Available options:
-
-```
-Usage: cli -d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd]
-
-Options:
-  -d --directory <input-directory>  Path to directory of Synthea Bundles
-  -c --cql <cql-file>               Path to cql file to be used for calculation
-  -u --url <url>                    Base URL of running cqf-ruler instance
-  -s --period-start <yyyy-mm-dd>    Start of the calculation period (default: "2019-01-01")
-  -e --period-end <yyyy-mm-dd>      End of the calculation period (default: "2019-12-31")
-  -v --verbose                      Enable debug logging (default: false)
-  -h, --help                        output usage information
-```
+Options are the same as above.
 
 ## Output
 
@@ -74,8 +69,8 @@ The CLI will create a directory called `output`, and inside this directory will 
 * A file `results.csv` of the following format:
 
 ``` csv
-"bundle","initial_population","numerator","denominator","error"
-"<bundle-name>",<true or false>,<true or false>,<true or false>,an error message if an error happened
+"bundle","initial_population","numerator","denominator"
+"<bundle-name>",<true or false>,<true or false>,<true or false>
 ```
 
 * Subdirectories for each population, containing the bundles that fell into those populations. **NOTE**: This will not duplicate bundles. E.g. if a patient falls into the numerator, they will only appear in that directory since it is a subset of the other two. Similar reasoning applies to a patient falling into the denominator as it is a subset of the IPOP.
@@ -92,9 +87,6 @@ output
 │   ├── numerator
 │   │   ├── a-patient.bundle.json
 │   │   └── ...
-│   ├── errors
-│   │   ├── a-patient.bundle.json
-│   │   └── ...
 │   └── results.csv
 └──
 ```
@@ -106,9 +98,20 @@ The cli will be able to detect if the provided CQL represents an Episode of Care
 In this case, the above output is mostly the same, but columns will be added that correspond to the number of episodes that fell into the relevant populations for the patient bundle in question, as well as a list of IDs for the episode:
 
 ``` csv
-"bundle","initial_population","numerator","denominator","initial_population_episodes","initial_population_episodeIds","denominator_episodes","denominator_episodeIds","numerator_episodes","numerator_episodeIds","error"
-"<bundle-name>",<true or false>,<true or false>,<true or false>,<count>,<list>,<count>,<list>,<count>,<list>,an error message if an error happened
+"bundle","initial_population","numerator","denominator","initial_population_episodes","initial_population_episodeIds","denominator_episodes","denominator_episodeIds","numerator_episodes","numerator_episodeIds"
+"<bundle-name>",<true or false>,<true or false>,<true or false>,<count>,<list>,<count>,<list>,<count>,<list>
 ```
+
+## Debugging
+
+Some initial logging is done for the CLI, but more verbose logging can  be done by setting `DEBUG=true` in the environment. 
+
+Example:
+``` bash
+DEBUG=true calculation-bundles [--options]
+```
+
+The responses for each `$cql` call are written to a log file `cql-responses.log` in case of any need for manual inspection of the response body.
 
 ## Unit Testing
 

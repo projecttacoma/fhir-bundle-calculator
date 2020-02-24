@@ -1,0 +1,104 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "fullUrl": "Initial Population",
+      "resource": {
+        "resourceType": "Parameters",
+        "id": "Initial Population",
+        "parameter": [
+          {
+            "name": "location",
+            "valueString": "[66:1]"
+          },
+          {
+            "name": "value",
+            "resource": {
+              "resourceType": "Bundle",
+              "type": "collection",
+              "entry": [
+                {
+                  "resourceType": "Encounter",
+                  "resource": {
+                    "id": 0
+                  }
+                },
+                {
+                  "resourceType": "Encounter",
+                  "resource": {
+                    "id": 1
+                  }
+                },
+                {
+                  "resourceType": "Encounter",
+                  "resource": {
+                    "id": 2
+                  }
+                },
+                {
+                  "resourceType": "Encounter",
+                  "resource": {
+                    "id": 3
+                  }
+                },
+                {
+                  "resourceType": "Encounter",
+                  "resource": {
+                    "id": 4
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "resultType",
+            "valueString": "List"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "Denominator",
+      "resource": {
+        "resourceType": "Parameters",
+        "id": "Denominator",
+        "parameter": [
+          {
+            "name": "location",
+            "valueString": "[85:1]"
+          },
+          {
+            "name": "value",
+            "valueString": "[]"
+          },
+          {
+            "name": "resultType",
+            "valueString": "List"
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "Numerator",
+      "resource": {
+        "resourceType": "Parameters",
+        "id": "Numerator",
+        "parameter": [
+          {
+            "name": "location",
+            "valueString": "[118:1]"
+          },
+          {
+            "name": "value",
+            "valueString": "[]"
+          },
+          {
+            "name": "resultType",
+            "valueString": "List"
+          }
+        ]
+      }
+    }
+  ]
+}
