@@ -1,9 +1,3 @@
 node_modules
-test-bundles
 output
-synthea
-connectathon
-.cqf-ruler
-.seed-cqf-ruler
-.setup-cqf-ruler
-*.csv
+*.log

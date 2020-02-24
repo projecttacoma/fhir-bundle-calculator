@@ -1,5 +1,10 @@
 const nock = require('nock');
+const { logger } = require('../src/utils/logger.js');
 const { calculate } = require('../src/utils/calculation');
+const allPopulationsResponse = require('./fixtures/all-populations-response.json');
+const somePopulationResponse = require('./fixtures/some-populations-response.json');
+const errorResponse = require('./fixtures/error-response.json');
+const episodeOfCareResponse = require('./fixtures/episode-of-care-response.json');
 
 const EXAMPLE_NUMERATOR_CQL = 'define "Initial Population":\r\n    true\r\n\r\ndefine "Numerator":\r\n    true\r\n\r\ndefine "Denominator":\r\n    true';
 const EXAMPLE_IPP_CQL = 'define "Initial Population":\r\n    true\r\n\r\ndefine "Numerator":\r\n    false\r\n\r\ndefine "Denominator":\r\n    true';
@@ -30,73 +35,17 @@ const getParamsForCQL = (cql) => ({
   }],
 });
 
+// Mock out process.exit
+const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
+
+// Disable logger in unit tests
+logger.info = jest.fn();
+logger.error = jest.fn();
+
 test('patient in the numerator should yield an object of all true', async () => {
   nock(MOCK_URL)
     .post('/$cql', getParamsForCQL(EXAMPLE_NUMERATOR_CQL))
-    .reply(200, {
-      resourceType: 'Bundle',
-      type: 'collection',
-      entry: [{
-        fullUrl: 'Initial Population',
-        resource: {
-          resourceType: 'Parameters',
-          id: 'Initial Population',
-          parameter: [{
-            name: 'location',
-            valueString: '[1:1]',
-          },
-          {
-            name: 'value',
-            valueString: 'true',
-          },
-          {
-            name: 'resultType',
-            valueString: 'Boolean',
-          },
-          ],
-        },
-      },
-      {
-        fullUrl: 'Numerator',
-        resource: {
-          resourceType: 'Parameters',
-          id: 'Numerator',
-          parameter: [{
-            name: 'location',
-            valueString: '[4:1]',
-          },
-          {
-            name: 'value',
-            valueString: 'true',
-          },
-          {
-            name: 'resultType',
-            valueString: 'Boolean',
-          },
-          ],
-        },
-      },
-      {
-        fullUrl: 'Denominator',
-        resource: {
-          resourceType: 'Parameters',
-          id: 'Denominator',
-          parameter: [{
-            name: 'location',
-            valueString: '[7:1]',
-          },
-          {
-            name: 'value',
-            valueString: 'true',
-          },
-          {
-            name: 'resultType',
-            valueString: 'Boolean',
-          },
-          ],
-        },
-      }],
-    });
+    .reply(200, allPopulationsResponse);
 
   const result = await calculate(
     MOCK_URL,
@@ -115,70 +64,7 @@ test('patient in the numerator should yield an object of all true', async () => 
 test('patient in ipp/denom but not numerator should yield proper booleans', async () => {
   nock(MOCK_URL)
     .post('/$cql', getParamsForCQL(EXAMPLE_IPP_CQL))
-    .reply(200, {
-      resourceType: 'Bundle',
-      type: 'collection',
-      entry: [{
-        fullUrl: 'Initial Population',
-        resource: {
-          resourceType: 'Parameters',
-          id: 'Initial Population',
-          parameter: [{
-            name: 'location',
-            valueString: '[1:1]',
-          },
-          {
-            name: 'value',
-            valueString: 'true',
-          },
-          {
-            name: 'resultType',
-            valueString: 'Boolean',
-          },
-          ],
-        },
-      },
-      {
-        fullUrl: 'Numerator',
-        resource: {
-          resourceType: 'Parameters',
-          id: 'Numerator',
-          parameter: [{
-            name: 'location',
-            valueString: '[4:1]',
-          },
-          {
-            name: 'value',
-            valueString: 'false',
-          },
-          {
-            name: 'resultType',
-            valueString: 'Boolean',
-          },
-          ],
-        },
-      },
-      {
-        fullUrl: 'Denominator',
-        resource: {
-          resourceType: 'Parameters',
-          id: 'Denominator',
-          parameter: [{
-            name: 'location',
-            valueString: '[7:1]',
-          },
-          {
-            name: 'value',
-            valueString: 'true',
-          },
-          {
-            name: 'resultType',
-            valueString: 'Boolean',
-          },
-          ],
-        },
-      }],
-    });
+    .reply(200, somePopulationResponse);
 
   const result = await calculate(
     MOCK_URL,
@@ -197,106 +83,23 @@ test('patient in ipp/denom but not numerator should yield proper booleans', asyn
 test('illegal cql should yield no population results and an error message', async () => {
   nock(MOCK_URL)
     .post('/$cql', getParamsForCQL(ILLEGAL_CQL))
-    .reply(200, {
-      resourceType: 'Bundle',
-      type: 'collection',
-      entry: [{
-        fullUrl: 'Initial Population',
-        resource: {
-          resourceType: 'Parameters',
-          id: 'Error',
-          parameter: [{
-            name: 'location',
-            valueString: '[1:0]',
-          },
-          {
-            name: 'error',
-            valueString: 'Syntax error at this',
-          }],
-        },
-      }],
-    });
+    .reply(200, errorResponse);
 
-  const result = await calculate(
+  await calculate(
     MOCK_URL,
     ILLEGAL_CQL,
     EXAMPLE_PATIENT_ID,
     PERIOD_START,
     PERIOD_END,
   );
-  expect(result.initial_population).toBe(null);
-  expect(result.numerator).toBe(null);
-  expect(result.denominator).toBe(null);
-  expect(result.error).toBeDefined();
+
+  expect(mockExit).toHaveBeenCalledWith(1);
 });
 
 test('episode of care measure should contain episode counts', async () => {
   nock(MOCK_URL)
     .post('/$cql', getParamsForCQL(EPISODE_OF_CARE_CQL))
-    .reply(200, {
-      resourceType: 'Bundle',
-      type: 'collection',
-      entry: [{
-        fullUrl: 'Initial Population',
-        resource: {
-          resourceType: 'Parameters',
-          id: 'Initial Population',
-          parameter: [{
-            name: 'location',
-            valueString: '[66:1]',
-          }, {
-            name: 'value',
-            resource: {
-              resourceType: 'Bundle',
-              type: 'collection',
-              entry: [
-                { resourceType: 'Encounter', resource: { id: 0 } },
-                { resourceType: 'Encounter', resource: { id: 1 } },
-                { resourceType: 'Encounter', resource: { id: 2 } },
-                { resourceType: 'Encounter', resource: { id: 3 } },
-                { resourceType: 'Encounter', resource: { id: 4 } },
-              ],
-            },
-          }, {
-            name: 'resultType',
-            valueString: 'List',
-          }],
-        },
-      }, {
-        fullUrl: 'Denominator',
-        resource: {
-          resourceType: 'Parameters',
-          id: 'Denominator',
-          parameter: [{
-            name: 'location',
-            valueString: '[85:1]',
-          },
-          {
-            name: 'value',
-            valueString: '[]',
-          }, {
-            name: 'resultType',
-            valueString: 'List',
-          }],
-        },
-      }, {
-        fullUrl: 'Numerator',
-        resource: {
-          resourceType: 'Parameters',
-          id: 'Numerator',
-          parameter: [{
-            name: 'location',
-            valueString: '[118:1]',
-          }, {
-            name: 'value',
-            valueString: '[]',
-          }, {
-            name: 'resultType',
-            valueString: 'List',
-          }],
-        },
-      }],
-    });
+    .reply(200, episodeOfCareResponse);
 
   const result = await calculate(
     MOCK_URL,
