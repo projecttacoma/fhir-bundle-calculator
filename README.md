@@ -108,7 +108,7 @@ Some initial logging is done for the CLI, but more verbose logging can  be done 
 
 Example:
 ``` bash
-DEBUG=true calculation-bundles [--options]
+DEBUG=true calculate-bundles [--options]
 ```
 
 The responses for each `$cql` call are written to a log file `cql-responses.log` in case of any need for manual inspection of the response body.
