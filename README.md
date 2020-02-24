@@ -36,14 +36,14 @@ Available options:
 Usage: calculate-bundles -d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd -m <measure-id>]
 
 Options:
-  -v --version                      Print the current version
-  -d --directory <input-directory>  Path to directory of Synthea Bundles
-  -c --cql <cql-file>               Path to cql file to be used for calculation
-  -m --measure-id <measure-id>      Measure ID to evaluate
-  -u --url <url>                    Base URL of running cqf-ruler instance (default: "http://localhost:8080/cqf-ruler-r4/fhir")
-  -s --period-start <yyyy-mm-dd>    Start of the calculation period (default: "2019-01-01")
-  -e --period-end <yyyy-mm-dd>      End of the calculation period (default: "2019-12-31")
-  -h, --help                        Output usage information
+  -v, --version                      print the current version
+  -d, --directory <input-directory>  path to directory of Synthea Bundles
+  -c, --cql <cql-file>               path to cql file to be used for calculation
+  -m, --measure-id <measure-id>      measure ID to evaluate
+  -u, --url <url>                    base URL of running cqf-ruler instance (default: "http://localhost:8080/cqf-ruler-r4/fhir")
+  -s, --period-start <yyyy-mm-dd>    start of the calculation period (default: "2019-01-01")
+  -e, --period-end <yyyy-mm-dd>      end of the calculation period (default: "2019-12-31")
+  -h, --help                         output usage information
 ```
 
 ## Local Usage
