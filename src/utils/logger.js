@@ -1,28 +1,25 @@
 const { loggers, format, transports } = require('winston');
 
-const fileTransport = new transports.File({ filename: 'cql-response.log' });
+const LOGGER_NAME = 'cli';
+const logFormat = format.printf(({ level, message, timestamp }) => (`${timestamp} [${level}]: ${message}`));
 
-if (!loggers.has('cli')) {
-  loggers.add('cli', {
+if (!loggers.has(LOGGER_NAME)) {
+  loggers.add(LOGGER_NAME, {
     level: process.env.DEBUG ? 'debug' : 'info',
-    format: format.cli(),
+    format: format.combine(
+      format.colorize(),
+      format.timestamp({ format: 'HH:mm:ss.SS' }),
+      format.align(),
+      logFormat,
+    ),
     transports: [
-      new transports.Console(),
-    ],
-  });
-}
-
-if (!loggers.has('file')) {
-  loggers.add('file', {
-    level: process.env.DEBUG ? 'debug' : 'info',
-    format: format.json(),
-    transports: [
-      fileTransport,
+      new transports.Console({
+        silent: process.env.NODE_ENV === 'test',
+      }),
     ],
   });
 }
 
 module.exports = {
-  logger: loggers.get('cli'),
-  fileLogger: loggers.get('file'),
+  logger: loggers.get(LOGGER_NAME),
 };

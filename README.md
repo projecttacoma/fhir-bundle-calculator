@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/projecttacoma/fhir-bundle-calculator.svg?branch=master)](https://travis-ci.com/projecttacoma/fhir-bundle-calculator)
 
-A CLI for outputting population statistics for FHIR patients and executing CQL from an eCQM using the `$cql` operation of the [cqf-ruler](https://github.com/DBCG/cqf-ruler) HAPI FHIR server
+A CLI for outputting population statistics and MeasureReports for FHIR patients for an eCQM using the `$evaluate-measure` operation of the [cqf-ruler](https://github.com/DBCG/cqf-ruler) HAPI FHIR server
 
 # Usage
 
@@ -33,12 +33,11 @@ calculate-bundles [--options]
 Available options:
 
 ```
-Usage: calculate-bundles -d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd -m <measure-id>]
+Usage: calculate-bundles -d /path/to/bundles -u http://<cqf-ruler-base-url> -m <measure-id> [-s yyyy-mm-dd -e yyyy-mm-dd]
 
 Options:
   -v, --version                      print the current version
   -d, --directory <input-directory>  path to directory of Synthea Bundles
-  -c, --cql <cql-file>               path to cql file to be used for calculation
   -m, --measure-id <measure-id>      measure ID to evaluate
   -u, --url <url>                    base URL of running cqf-ruler instance (default: "http://localhost:8080/cqf-ruler-r4/fhir")
   -s, --period-start <yyyy-mm-dd>    start of the calculation period (default: "2019-01-01")
@@ -69,11 +68,12 @@ The CLI will create a directory called `output`, and inside this directory will 
 * A file `results.csv` of the following format:
 
 ``` csv
-"bundle","initial_population","numerator","denominator"
-"<bundle-name>",<true or false>,<true or false>,<true or false>
+"bundle","population"
+"<bundle-name>","<numerator|denominator|ipop|none>"
 ```
 
 * Subdirectories for each population, containing the bundles that fell into those populations. **NOTE**: This will not duplicate bundles. E.g. if a patient falls into the numerator, they will only appear in that directory since it is a subset of the other two. Similar reasoning applies to a patient falling into the denominator as it is a subset of the IPOP.
+* Indivual MeasureReports that were returned by the server after each `$evaluate-measure` call
 
 ```
 output
@@ -85,21 +85,16 @@ output
 │   │   ├── a-patient-bundle.json
 │   │   └── ...
 │   ├── numerator
-│   │   ├── a-patient.bundle.json
+│   │   ├── a-patient-bundle.json
+│   │   └── ...
+│   ├── none
+│   │   ├── a-patient-bundle.json
+│   │   └── ...
+│   ├── measure-reports
+│   │   ├── a-measure-report.json
 │   │   └── ...
 │   └── results.csv
 └──
-```
-
-### Epsiode of Care Measures
-
-The cli will be able to detect if the provided CQL represents an Episode of Care measure by inspecting the return types for the various populations. Populations with a return type of `List` will be treated as Episode of Care, as they will contain a FHIR bundle with the relevant resources.
-
-In this case, the above output is mostly the same, but columns will be added that correspond to the number of episodes that fell into the relevant populations for the patient bundle in question, as well as a list of IDs for the episode:
-
-``` csv
-"bundle","initial_population","numerator","denominator","initial_population_episodes","initial_population_episodeIds","denominator_episodes","denominator_episodeIds","numerator_episodes","numerator_episodeIds"
-"<bundle-name>",<true or false>,<true or false>,<true or false>,<count>,<list>,<count>,<list>,<count>,<list>
 ```
 
 ## Debugging
@@ -110,8 +105,6 @@ Example:
 ``` bash
 DEBUG=true calculate-bundles [--options]
 ```
-
-The responses for each `$cql` call are written to a log file `cql-responses.log` in case of any need for manual inspection of the response body.
 
 ## Unit Testing
 

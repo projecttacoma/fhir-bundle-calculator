@@ -6,9 +6,10 @@
   "author": "Matthew Gramigna <mgramigna@mitre.org>",
   "main": "src/cli.js",
   "scripts": {
-    "lint": "eslint ./**/*.js",
-    "lint-fix": "eslint ./**/*.js --fix",
-    "test": "NO_PROXY=localhost jest"
+    "lint": "eslint \"./**/*.js\"",
+    "lint-fix": "eslint \"./**/*.js\" --fix",
+    "test": "NO_PROXY=localhost jest",
+    "test:watch": "NO_PROXY=localhost jest --watchAll"
   },
   "bin": {
     "calculate-bundles": "./src/cli.js"
@@ -17,6 +18,7 @@
   "dependencies": {
     "axios": "^0.19.0",
     "commander": "^4.0.1",
+    "fhirpath": "^1.0.1",
     "json2csv": "^4.5.4",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
