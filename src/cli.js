@@ -16,22 +16,21 @@ const moment = require('moment');
 const _ = require('lodash');
 const errors = require('./utils/errors');
 const { logger } = require('./utils/logger');
-const { calculate } = require('./utils/calculation');
+const { getCalculationResults } = require('./utils/calculation');
 
 program
-  .version('2.0.0', '-v, --version', 'print the current version')
+  .version('3.0.0', '-v, --version', 'print the current version')
   .option('-d, --directory <input-directory>', 'path to directory of Synthea Bundles')
-  .option('-c, --cql <cql-file>', 'path to cql file to be used for calculation')
   .option('-m, --measure-id <measure-id>', 'measure ID to evaluate')
   .option('-u, --url <url>', 'base URL of running cqf-ruler instance', 'http://localhost:8080/cqf-ruler-r4/fhir')
   .option('-s, --period-start <yyyy-mm-dd>', 'start of the calculation period', '2019-01-01')
   .option('-e, --period-end <yyyy-mm-dd>', 'end of the calculation period', '2019-12-31')
-  .usage('-d /path/to/bundles -c /path/to/cql/file -u http://<cqf-ruler-base-url> [-s yyyy-mm-dd -e yyyy-mm-dd -m <measure-id>]')
+  .usage('-d /path/to/bundles -u http://<cqf-ruler-base-url> -m <measure-id> [-s yyyy-mm-dd -e yyyy-mm-dd]')
   .parse(process.argv);
 
 // Enforce required parameters
-if (!program.directory || !program.url || !program.cql) {
-  logger.error('-d/--directory, -u/--url, and -c/--cql are required');
+if (!program.directory || !program.url || !program.measureId) {
+  logger.error('-d/--directory, -u/--url, and -m/--measure-id are required');
   program.help();
 }
 
@@ -47,19 +46,23 @@ if (!fs.existsSync(outputRoot)) {
   logger.debug('Creating output directory');
   fs.mkdirSync(outputRoot);
 }
-
 // Output for this run is timestamped with the current datetime
 const outputPath = path.join(outputRoot, `/results-${moment().format('YYYY-MM-DD-THHmmss')}`);
-const ipopPath = path.join(outputPath, '/ipop');
-const numerPath = path.join(outputPath, '/numerator');
-const denomPath = path.join(outputPath, '/denominator');
+fs.mkdirSync(outputPath);
 
 // Create subdirectories for timestamped results and sorted populations
 logger.debug('Creating population directories');
-fs.mkdirSync(outputPath);
-fs.mkdirSync(ipopPath);
-fs.mkdirSync(numerPath);
-fs.mkdirSync(denomPath);
+const dirPaths = {
+  ipop: path.join(outputPath, '/ipop'),
+  numerator: path.join(outputPath, '/numerator'),
+  denominator: path.join(outputPath, '/denominator'),
+  none: path.join(outputPath, '/none'),
+  measureReport: path.join(outputPath, '/measure-reports'),
+};
+
+Object.values(dirPaths).forEach((dir) => {
+  fs.mkdirSync(dir);
+});
 
 const outputFile = `${outputPath}/results.csv`;
 
@@ -72,8 +75,13 @@ if (_.isEmpty(bundleFiles)) {
   process.exit(1);
 }
 
-logger.debug('Reading CQL file');
-const cql = fs.readFileSync(program.cql, 'utf8');
+const populationCodes = {
+  numerator: 'numerator',
+  denominator: 'denominator',
+  ipop: 'ipop',
+  none: 'none',
+};
+
 const results = [];
 const resultCounts = {
   ipop: 0,
@@ -84,6 +92,7 @@ const resultCounts = {
 };
 
 const client = axios.create({ baseURL: program.url });
+const writeJSONFile = (filePath, content) => fs.writeFileSync(filePath, JSON.stringify(content), 'utf8');
 
 const processBundles = async (files) => {
   // Notes: Need to use for ... of ... to allow loop to halt until we get a response from the server
@@ -126,10 +135,10 @@ const processBundles = async (files) => {
     logger.info(`Running calculation on Patient ${patientId}`);
     let res;
     try {
-      res = await calculate(
-        program.url,
-        cql,
+      res = await getCalculationResults(
+        client,
         patientId,
+        program.measureId,
         program.periodStart,
         program.periodEnd,
       );
@@ -137,55 +146,37 @@ const processBundles = async (files) => {
       errors.handleHttpError(e);
     }
 
-    logger.debug(`Got calculation results: ${JSON.stringify(res)}`);
+    const measureReportFile = `${dirPaths.measureReport}/${bundleId}-MeasureReport.json`;
+    writeJSONFile(measureReportFile, res.measureReport);
+    logger.info(`Wrote individual MeasureReport to ${measureReportFile}`);
 
-    const validNumerator = res.numerator && res.initial_population && res.denominator;
-    const validDenominator = res.denominator && res.initial_population;
-    const validIpop = res.initial_population;
-
-    // Inialize csv row with relevant booleans
-    let row = {
+    logger.debug(`Bundle ${bundleId} calculated with population ${res.population}`);
+    results.push({
       bundle: bundleId,
-      initial_population: validIpop,
-      numerator: validNumerator,
-      denominator: validDenominator,
-    };
-
-    // Episode of care measure will have counts for each population. Add those to the csv
-    if (res.counts) {
-      logger.info('Found episode of care measure');
-      logger.debug('Adding episode of care columns');
-      row = {
-        ...row,
-        ...res.counts,
-      };
-    }
-
-    // Used for csv generation
-    results.push(row);
+      population: res.population,
+    });
 
     // Write the content to the proper directories
-    const bundleContent = JSON.stringify(bundle);
-    if (validNumerator) {
-      logger.info(`[NUMERATOR] Wrote bundle ${bundleId} to ${numerPath}`);
-      fs.writeFileSync(`${numerPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+    if (res.population === populationCodes.numerator) {
+      logger.info(`[NUMERATOR] Wrote bundle ${bundleId} to ${dirPaths.numerator}`);
+      writeJSONFile(`${dirPaths.numerator}/${path.basename(bundlePath)}`, bundle);
       resultCounts.numerator += 1;
-    } else if (validDenominator) {
-      logger.info(`[DENOMINATOR] Wrote bundle ${bundleId} to ${denomPath}`);
-      fs.writeFileSync(`${denomPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+    } else if (res.population === populationCodes.denominator) {
+      logger.info(`[DENOMINATOR] Wrote bundle ${bundleId} to ${dirPaths.denominator}`);
+      writeJSONFile(`${dirPaths.denominator}/${path.basename(bundlePath)}`, bundle);
       resultCounts.denominator += 1;
-    } else if (validIpop) {
-      logger.info(`[IPOP] Wrote bundle ${bundleId} to ${ipopPath}`);
-      fs.writeFileSync(`${ipopPath}/${path.basename(bundlePath)}`, bundleContent, 'utf8');
+    } else if (res.population === populationCodes.ipop) {
+      logger.info(`[IPOP] Wrote bundle ${bundleId} to ${dirPaths.ipop}`);
+      writeJSONFile(`${dirPaths.ipop}/${path.basename(bundlePath)}`, bundle);
       resultCounts.ipop += 1;
     } else {
-      logger.info(`No population results for ${bundlePath}`);
+      logger.info(`[NONE] Wrote bundle ${bundleId} to ${dirPaths.none}`);
+      writeJSONFile(`${dirPaths.none}/${path.basename(bundlePath)}`, bundle);
       resultCounts.none += 1;
     }
     resultCounts.total += 1;
   }
 
-  // Write .csv results to file
   fs.writeFileSync(outputFile, parse(results), 'utf8');
   logger.info(`Wrote csv output to ${outputFile}`);
   logger.info(`
@@ -199,16 +190,14 @@ const processBundles = async (files) => {
       `);
 
   // Get a patient-list MeasureReport from cqf-ruler
-  if (program.measureId) {
-    try {
-      logger.info('Generating patient-list MeasureReport');
-      logger.debug(`Using measure ID: ${program.measureId}`);
-      const mrResp = await client.get(`/Measure/${program.measureId}/$evaluate-measure?reportType=patient-list&periodStart=${program.periodStart}&periodEnd=${program.periodEnd}`);
-      fs.writeFileSync(`${outputPath}/measure-report.json`, JSON.stringify(mrResp.data), 'utf8');
-      logger.info(`Wrote measure-report to ${outputPath}/measure-report.json`);
-    } catch (e) {
-      errors.handleHttpError(e);
-    }
+  try {
+    logger.info('Generating patient-list MeasureReport');
+    logger.debug(`Using measure ID: ${program.measureId}`);
+    const mrResp = await client.get(`/Measure/${program.measureId}/$evaluate-measure?reportType=patient-list&periodStart=${program.periodStart}&periodEnd=${program.periodEnd}`);
+    writeJSONFile(`${outputPath}/population-measure-report.json`, mrResp.data);
+    logger.info(`Wrote MeasureReport to ${outputPath}/population-measure-report.json`);
+  } catch (e) {
+    errors.handleHttpError(e);
   }
 };
 

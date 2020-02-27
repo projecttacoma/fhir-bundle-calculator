@@ -1,102 +1,45 @@
-const axios = require('axios');
-const _ = require('lodash');
-const { logger, fileLogger } = require('./logger');
+const querystring = require('querystring');
+const { logger } = require('./logger');
+const { getPopulationCount } = require('./fhirpath');
 
-// Assembles the payload for the $cql operation supported by cqf-ruler
-const buildParameters = (cql, patientId, periodStart, periodEnd) => ({
-  resourceType: 'Parameters',
-  parameter: [{
-    name: 'code',
-    valueString: cql,
-  }, {
-    name: 'patientId',
-    valueString: patientId,
-  }, {
-    name: 'periodStart',
-    valueString: periodStart,
-  }, {
-    name: 'periodEnd',
-    valueString: periodEnd,
-  }, {
-    name: 'context',
-    valueString: 'context',
-  }],
-});
+const buildQueryString = (params) => querystring.encode({ reportType: 'patient', ...params });
 
-// Get the return type and return value for relevant cql definitions
-const getValueAndType = (results) => ({
-  value: results.find((p) => p.name === 'value'),
-  valueType: results.find((p) => p.name === 'resultType'),
-});
+const getCalculationResults = async (client, patientId, measureId, periodStart, periodEnd) => {
+  const evalMeasureUrl = `/Measure/${measureId}/$evaluate-measure?${buildQueryString({ patient: patientId, periodStart, periodEnd })}`;
 
-/**
- * Use the $cql operation to process calculation results
- *
- * @param {string} url base url of the running cqf-ruler instance
- * @param {string} cql a stringingied version of the cql code to be used for execution
- * @param {string} patientId id of the patient resource on the server to calculate against
- * @param {string} periodStart yyyy-mm-dd for the start of the calculation period
- * @param {string} periodEnd yyyy-mm-dd for the end of the calculation period
- *
- * @returns {object} {
- *   initial_population: true|false|null,
- *   numerator: true|false|null,
- *   denominator: true|false|null,
- * }
- */
-const calculate = async (url, cql, patientId, periodStart, periodEnd) => {
-  logger.debug('Building $cql parameters');
-  const parameters = buildParameters(cql, patientId, periodStart, periodEnd);
-  const response = await axios.post(`${url}/$cql`, parameters);
+  logger.info(`GET ${evalMeasureUrl}`);
+  const response = await client.get(evalMeasureUrl);
+  const measureReport = response.data;
 
-  logger.debug('Logging $cql response to cql-responses.log');
-  fileLogger.info(response.data);
+  logger.debug(`Got individual MeasureReport ${JSON.stringify(measureReport)}`);
 
-  // Get results for only the definitions that we care about
-  const definitions = ['Initial Population', 'Numerator', 'Denominator', 'Error'];
-  const relevantResults = response.data.entry.filter((e) => _.includes(definitions, e.resource.id));
+  if (getPopulationCount(measureReport, 'numerator') > 0) {
+    return {
+      measureReport,
+      population: 'numerator',
+    };
+  }
 
-  // Populations will be remain null if an error occurs
-  const result = {
-    initial_population: null,
-    numerator: null,
-    denominator: null,
+  if (getPopulationCount(measureReport, 'denominator') > 0) {
+    return {
+      measureReport,
+      population: 'denominator',
+    };
+  }
+
+  if (getPopulationCount(measureReport, 'initial-population') > 0) {
+    return {
+      measureReport,
+      population: 'ipop',
+    };
+  }
+
+  return {
+    measureReport,
+    population: 'none',
   };
-
-  relevantResults.forEach((r) => {
-    // Only grab the value that the definition returns
-    const { value, valueType } = getValueAndType(r.resource.parameter);
-    const populationIdentifier = r.resource.id.toLowerCase().replace(/\s/g, '_');
-
-    if (value) {
-      if (valueType.valueString === 'Boolean') {
-        // NOTE: using === 'true' to get a boolean value from the returned string
-        result[populationIdentifier] = value.valueString === 'true';
-      } else if (valueType.valueString === 'List') {
-        // For a List return type in episode of care measures, we want a non-zero
-        // amount of episodes for this patient
-        const isEmptyPopulation = value.valueString === '[]';
-        const numEpisodes = isEmptyPopulation ? 0 : value.resource.entry.length;
-        result[populationIdentifier] = numEpisodes > 0;
-
-        // Add a column for number of episodes in the population for episode of care measures
-        if (!result.counts) {
-          result.counts = {};
-        }
-        result.counts[`${populationIdentifier}_episodes`] = numEpisodes;
-        result.counts[`${populationIdentifier}_episodeIDs`] = isEmptyPopulation ? [] : value.resource.entry.map((e) => e.resource.id);
-      }
-    } else {
-      // If no value for a given population, we have an error
-      const error = r.resource.parameter.find((p) => p.name === 'error');
-      logger.error(`CQL Error: ${error.valueString}`);
-      process.exit(1);
-    }
-  });
-
-  return result;
 };
 
 module.exports = {
-  calculate,
+  getCalculationResults,
 };
