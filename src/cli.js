@@ -40,18 +40,9 @@ if (!fs.existsSync(program.directory)) {
   program.help();
 }
 
-// Create output directory if it doesn't exist
-const outputRoot = './output';
-if (!fs.existsSync(outputRoot)) {
-  logger.debug('Creating output directory');
-  fs.mkdirSync(outputRoot);
-}
-// Output for this run is timestamped with the current datetime
-const outputPath = path.join(outputRoot, `/results-${moment().format('YYYY-MM-DD-THHmmss')}`);
-fs.mkdirSync(outputPath);
-
 // Create subdirectories for timestamped results and sorted populations
 logger.debug('Creating population directories');
+const outputPath = `./output/results-${moment().format('YYYY-MM-DD-THHmmss')}`;
 const dirPaths = {
   ipop: path.join(outputPath, '/ipop'),
   numerator: path.join(outputPath, '/numerator'),
@@ -61,7 +52,7 @@ const dirPaths = {
 };
 
 Object.values(dirPaths).forEach((dir) => {
-  fs.mkdirSync(dir);
+  fs.mkdirSync(dir, { recursive: true });
 });
 
 const outputFile = `${outputPath}/results.csv`;
