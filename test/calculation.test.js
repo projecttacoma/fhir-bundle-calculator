@@ -32,7 +32,7 @@ test('patient in the numerator should yield an proper population result', async 
   expect(result.population).toBe('numerator');
 });
 
-test('patient in the denominator should yield an proper population result', async () => {
+test('patient in the denominator should yield a proper population result', async () => {
   nock(MOCK_URL)
     .get(`/Measure/${EXAMPLE_MEASURE_ID}/$evaluate-measure`)
     .query(() => true)
@@ -50,7 +50,7 @@ test('patient in the denominator should yield an proper population result', asyn
   expect(result.population).toBe('denominator');
 });
 
-test('patient in the ipop should yield an proper population result', async () => {
+test('patient in the ipop should yield a proper population result', async () => {
   nock(MOCK_URL)
     .get(`/Measure/${EXAMPLE_MEASURE_ID}/$evaluate-measure`)
     .query(() => true)
@@ -68,7 +68,7 @@ test('patient in the ipop should yield an proper population result', async () =>
   expect(result.population).toBe('ipop');
 });
 
-test('patient in no population should yield an proper population result', async () => {
+test('patient in no population should yield a proper population result', async () => {
   nock(MOCK_URL)
     .get(`/Measure/${EXAMPLE_MEASURE_ID}/$evaluate-measure`)
     .query(() => true)
