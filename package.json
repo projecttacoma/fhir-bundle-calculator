@@ -1,7 +1,7 @@
 {
   "name": "fhir-bundle-calculator",
   "version": "3.0.0",
-  "description": "CLI for executing CQL calculation for a generated Synthea Patient Bundle",
+  "description": "A CLI for outputting population statistics and MeasureReports for FHIR patients for an eCQM using the $evaluate-measure operation",
   "repository": "git@github.com:projecttacoma/fhir-bundle-calculator.git",
   "author": "Matthew Gramigna <mgramigna@mitre.org>",
   "main": "src/cli.js",
