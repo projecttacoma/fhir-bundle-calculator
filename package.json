@@ -1,6 +1,6 @@
 {
   "name": "fhir-bundle-calculator",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "A CLI for outputting population statistics and MeasureReports for FHIR patients for an eCQM using the $evaluate-measure operation",
   "repository": "git@github.com:projecttacoma/fhir-bundle-calculator.git",
   "author": "Matthew Gramigna <mgramigna@mitre.org>",
