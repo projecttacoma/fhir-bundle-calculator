@@ -8,7 +8,7 @@ A CLI for outputting population statistics and MeasureReports for FHIR patients 
 
 ## Prerequisites
 
-* [Node.js](https://nodejs.org/en/)
+* [Node.js >=10.15.1](https://nodejs.org/en/)
 * A running `cqf-ruler` server. See their [usage instructions](https://github.com/DBCG/cqf-ruler#usage) or use a public sandbox
 
 ## Installation with NPM

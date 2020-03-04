@@ -30,5 +30,8 @@
     "eslint-plugin-import": "^2.18.2",
     "jest": "^24.9.0",
     "nock": "^11.7.0"
+  },
+  "engines": {
+    "node": ">=10.15.1"
   }
 }
