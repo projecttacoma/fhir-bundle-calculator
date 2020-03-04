@@ -8,8 +8,8 @@
   "scripts": {
     "lint": "eslint \"./**/*.js\"",
     "lint-fix": "eslint \"./**/*.js\" --fix",
-    "test": "NO_PROXY=localhost jest",
-    "test:watch": "NO_PROXY=localhost jest --watchAll"
+    "test": "jest",
+    "test:watch": "jest --watchAll"
   },
   "bin": {
     "calculate-bundles": "./src/cli.js"
