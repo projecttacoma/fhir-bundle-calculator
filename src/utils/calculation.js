@@ -1,6 +1,6 @@
 const querystring = require('querystring');
 const { logger } = require('./logger');
-const { getPopulationCount } = require('./fhirpath');
+const { getPopulationCount, getMeasureScore } = require('./fhirpath');
 
 const buildQueryString = (params) => querystring.encode({ reportType: 'patient', ...params });
 
@@ -10,6 +10,7 @@ const getCalculationResults = async (client, patientId, measureId, periodStart, 
   logger.info(`GET ${evalMeasureUrl}`);
   const response = await client.get(evalMeasureUrl);
   const measureReport = response.data;
+  const measureScore = getMeasureScore(measureReport);
 
   logger.debug(`Got individual MeasureReport ${JSON.stringify(measureReport)}`);
 
@@ -17,6 +18,7 @@ const getCalculationResults = async (client, patientId, measureId, periodStart, 
     return {
       measureReport,
       population: 'numerator',
+      measureScore,
     };
   }
 
@@ -24,6 +26,7 @@ const getCalculationResults = async (client, patientId, measureId, periodStart, 
     return {
       measureReport,
       population: 'denominator',
+      measureScore,
     };
   }
 
@@ -31,12 +34,14 @@ const getCalculationResults = async (client, patientId, measureId, periodStart, 
     return {
       measureReport,
       population: 'ipop',
+      measureScore,
     };
   }
 
   return {
     measureReport,
     population: 'none',
+    measureScore,
   };
 };
 

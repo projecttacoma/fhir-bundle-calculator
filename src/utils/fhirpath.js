@@ -9,3 +9,5 @@ exports.getPopulationCount = (mr, population) => {
   }
   return null;
 };
+
+exports.getMeasureScore = (mr) => fhirpath.evaluate(mr, 'MeasureReport.group.measureScore.value')[0];
