@@ -30,6 +30,7 @@ test('patient in the numerator should yield an proper population result', async 
 
   expect(result.measureReport).toEqual(numerMeasureReport);
   expect(result.population).toBe('numerator');
+  expect(result.measureScore).toBe(1);
 });
 
 test('patient in the denominator should yield a proper population result', async () => {
@@ -48,6 +49,7 @@ test('patient in the denominator should yield a proper population result', async
 
   expect(result.measureReport).toEqual(denomMeasureReport);
   expect(result.population).toBe('denominator');
+  expect(result.measureScore).toBe(0);
 });
 
 test('patient in the ipop should yield a proper population result', async () => {
@@ -66,6 +68,7 @@ test('patient in the ipop should yield a proper population result', async () => 
 
   expect(result.measureReport).toEqual(ipopMeasureReport);
   expect(result.population).toBe('ipop');
+  expect(result.measureScore).toBe(0);
 });
 
 test('patient in no population should yield a proper population result', async () => {
@@ -84,4 +87,5 @@ test('patient in no population should yield a proper population result', async (
 
   expect(result.measureReport).toEqual(noPopMeasureReport);
   expect(result.population).toBe('none');
+  expect(result.measureScore).toBe(0);
 });

@@ -140,6 +140,7 @@ const processBundles = async (files) => {
     const measureReportFile = `${dirPaths.measureReport}/${bundleId}-MeasureReport.json`;
     writeJSONFile(measureReportFile, res.measureReport);
     logger.info(`Wrote individual MeasureReport to ${measureReportFile}`);
+    logger.info(`Measure Score: ${res.measureScore}`);
 
     logger.debug(`Bundle ${bundleId} calculated with population ${res.population}`);
     results.push({
