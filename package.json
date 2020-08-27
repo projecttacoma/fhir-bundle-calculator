@@ -20,7 +20,7 @@
     "commander": "^4.0.1",
     "fhirpath": "^1.0.1",
     "json2csv": "^4.5.4",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "moment": "^2.24.0",
     "winston": "^3.2.1"
   },
@@ -28,7 +28,7 @@
     "eslint": "^6.6.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.18.2",
-    "jest": "^24.9.0",
+    "jest": "^26.4.2",
     "nock": "^11.7.0"
   },
   "engines": {
