@@ -148,6 +148,38 @@ const processBundles = async (files) => {
       population: res.population,
     });
 
+    if (res.stratifiers) {
+      res.stratifiers.forEach((strat) => {
+        const stratifierPath = path.join(outputPath, `/${strat.name}`);
+        const stratifierPaths = {
+          ipop: path.join(stratifierPath, '/ipop'),
+          numerator: path.join(stratifierPath, '/numerator'),
+          denominator: path.join(stratifierPath, '/denominator'),
+          none: path.join(stratifierPath, '/none'),
+        };
+
+        if (!fs.existsSync(stratifierPath)) {
+          Object.values(stratifierPaths).forEach((dir) => {
+            fs.mkdirSync(dir, { recursive: true });
+          });
+        }
+
+        if (strat.population === populationCodes.numerator) {
+          logger.info(`[${strat.name} - NUMERATOR] Wrote bundle ${bundleId} to ${stratifierPaths.numerator}`);
+          writeJSONFile(`${stratifierPaths.numerator}/${path.basename(bundlePath)}`, bundle);
+        } else if (strat.population === populationCodes.denominator) {
+          logger.info(`[${strat.name} - DENOMINATOR] Wrote bundle ${bundleId} to ${stratifierPaths.denominator}`);
+          writeJSONFile(`${stratifierPaths.denominator}/${path.basename(bundlePath)}`, bundle);
+        } else if (strat.population === populationCodes.ipop) {
+          logger.info(`[${strat.name} - IPOP] Wrote bundle ${bundleId} to ${stratifierPaths.ipop}`);
+          writeJSONFile(`${stratifierPaths.ipop}/${path.basename(bundlePath)}`, bundle);
+        } else {
+          logger.info(`[${strat.name} - NONE] Wrote bundle ${bundleId} to ${stratifierPaths.none}`);
+          writeJSONFile(`${stratifierPaths.none}/${path.basename(bundlePath)}`, bundle);
+        }
+      });
+    }
+
     // Write the content to the proper directories
     if (res.population === populationCodes.numerator) {
       logger.info(`[NUMERATOR] Wrote bundle ${bundleId} to ${dirPaths.numerator}`);

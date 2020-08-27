@@ -1,8 +1,8 @@
 const fhirpath = require('fhirpath');
 
-exports.getPopulationCount = (mr, population) => {
-  const path = fhirpath.compile(`MeasureReport.group.population.where(code.coding.code = '${population}')`);
-  const result = path(mr);
+exports.getPopulationCount = (group, population) => {
+  const path = fhirpath.compile(`population.where(code.coding.code = '${population}')`);
+  const result = path(group);
 
   if (!!result && result[0] !== undefined) {
     return result[0].count;
@@ -10,4 +10,11 @@ exports.getPopulationCount = (mr, population) => {
   return null;
 };
 
-exports.getMeasureScore = (mr) => fhirpath.evaluate(mr, 'MeasureReport.group.measureScore.value')[0];
+exports.getMeasureScore = (group) => fhirpath.evaluate(group, 'measureScore.value')[0];
+
+exports.getStratifiers = (mr) => {
+  const results = fhirpath.evaluate(mr, 'MeasureReport.group.first().stratifier.where(stratum)');
+  return (results && results.length > 0) ? results : null;
+};
+
+exports.getStratifierName = (strat) => fhirpath.evaluate(strat, 'code.coding.code')[0] || null;
