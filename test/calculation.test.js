@@ -5,6 +5,7 @@ const numerMeasureReport = require('./fixtures/numerator-measure-report.json');
 const denomMeasureReport = require('./fixtures/denominator-measure-report.json');
 const ipopMeasureReport = require('./fixtures/ipop-measure-report.json');
 const noPopMeasureReport = require('./fixtures/no-pop-measure-report.json');
+const stratifierMeasureReport = require('./fixtures/stratifier-measure-report.json');
 
 const MOCK_URL = 'http://localhost';
 const EXAMPLE_PATIENT_ID = 'example-patient';
@@ -88,4 +89,37 @@ test('patient in no population should yield a proper population result', async (
   expect(result.measureReport).toEqual(noPopMeasureReport);
   expect(result.population).toBe('none');
   expect(result.measureScore).toBe(0);
+});
+
+test('stratifier results should match', async () => {
+  nock(MOCK_URL)
+    .get(`/Measure/${EXAMPLE_MEASURE_ID}/$evaluate-measure`)
+    .query(() => true)
+    .reply(200, stratifierMeasureReport);
+
+  const result = await getCalculationResults(
+    mockClient,
+    EXAMPLE_PATIENT_ID,
+    EXAMPLE_MEASURE_ID,
+    PERIOD_START,
+    PERIOD_END,
+  );
+
+  const EXPECTED_STRATIFIER_RESULT = [
+    {
+      name: 'stratifier-0',
+      population: 'numerator',
+      measureScore: 1,
+    },
+    {
+      name: 'stratifier-1',
+      population: 'denominator',
+      measureScore: 0,
+    },
+  ];
+
+  expect(result.measureReport).toEqual(stratifierMeasureReport);
+  expect(result.population).toBe('numerator');
+  expect(result.measureScore).toBe(1);
+  expect(result.stratifiers).toEqual(EXPECTED_STRATIFIER_RESULT);
 });
