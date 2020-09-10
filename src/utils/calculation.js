@@ -36,7 +36,7 @@ function getPopulationResults(group) {
 }
 
 const getCalculationResults = async (client, patientId, measureId, periodStart, periodEnd) => {
-  const evalMeasureUrl = `/Measure/${measureId}/$evaluate-measure?${buildQueryString({ patient: patientId, periodStart, periodEnd })}`;
+  const evalMeasureUrl = `/Measure/${measureId}/evaluate-measure?${buildQueryString({ patient: patientId, periodStart, periodEnd })}`;
 
   logger.info(`GET ${evalMeasureUrl}`);
   const response = await client.get(evalMeasureUrl);
