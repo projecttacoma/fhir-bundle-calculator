@@ -22,6 +22,13 @@ function getPopulationResults(group) {
     };
   }
 
+  if (getPopulationCount(group, 'measure-population') > 0) {
+    return {
+      population: 'measure-population',
+      measureScore,
+    };
+  }
+
   if (getPopulationCount(group, 'initial-population') > 0) {
     return {
       population: 'ipop',
