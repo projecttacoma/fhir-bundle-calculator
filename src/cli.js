@@ -49,6 +49,7 @@ const dirPaths = {
   denominator: path.join(outputPath, '/denominator'),
   none: path.join(outputPath, '/none'),
   measureReport: path.join(outputPath, '/measure-reports'),
+  measurePopulation: path.join(outputPath, '/measure-population'),
 };
 
 Object.values(dirPaths).forEach((dir) => {
@@ -70,6 +71,7 @@ const populationCodes = {
   numerator: 'numerator',
   denominator: 'denominator',
   ipop: 'ipop',
+  measurePopulation: 'measure-population',
   none: 'none',
 };
 
@@ -78,6 +80,7 @@ const resultCounts = {
   ipop: 0,
   numerator: 0,
   denominator: 0,
+  measurePopulation: 0,
   none: 0,
   total: 0,
 };
@@ -140,7 +143,10 @@ const processBundles = async (files) => {
     const measureReportFile = `${dirPaths.measureReport}/${bundleId}-MeasureReport.json`;
     writeJSONFile(measureReportFile, res.measureReport);
     logger.info(`Wrote individual MeasureReport to ${measureReportFile}`);
-    logger.info(`Measure Score: ${res.measureScore}`);
+
+    if (res.measureScore) {
+      logger.info(`Measure Score: ${res.measureScore}`);
+    }
 
     logger.debug(`Bundle ${bundleId} calculated with population ${res.population}`);
     results.push({
@@ -155,6 +161,7 @@ const processBundles = async (files) => {
           ipop: path.join(stratifierPath, '/ipop'),
           numerator: path.join(stratifierPath, '/numerator'),
           denominator: path.join(stratifierPath, '/denominator'),
+          measurePopulation: path.join(stratifierPath, '/measure-population'),
           none: path.join(stratifierPath, '/none'),
         };
 
@@ -170,6 +177,9 @@ const processBundles = async (files) => {
         } else if (strat.population === populationCodes.denominator) {
           logger.info(`[${strat.name} - DENOMINATOR] Wrote bundle ${bundleId} to ${stratifierPaths.denominator}`);
           writeJSONFile(`${stratifierPaths.denominator}/${path.basename(bundlePath)}`, bundle);
+        } else if (strat.population === populationCodes.measurePopulation) {
+          logger.info(`[${strat.name} - MEASURE POPULATION] Wrote bundle ${bundleId} to ${dirPaths.measurePopulation}`);
+          writeJSONFile(`${stratifierPaths.measurePopulation}/${path.basename(bundlePath)}`, bundle);
         } else if (strat.population === populationCodes.ipop) {
           logger.info(`[${strat.name} - IPOP] Wrote bundle ${bundleId} to ${stratifierPaths.ipop}`);
           writeJSONFile(`${stratifierPaths.ipop}/${path.basename(bundlePath)}`, bundle);
@@ -189,6 +199,10 @@ const processBundles = async (files) => {
       logger.info(`[DENOMINATOR] Wrote bundle ${bundleId} to ${dirPaths.denominator}`);
       writeJSONFile(`${dirPaths.denominator}/${path.basename(bundlePath)}`, bundle);
       resultCounts.denominator += 1;
+    } else if (res.population === populationCodes.measurePopulation) {
+      logger.info(`[MEASURE POPULATION] Wrote bundle ${bundleId} to ${dirPaths.measurePopulation}`);
+      writeJSONFile(`${dirPaths.measurePopulation}/${path.basename(bundlePath)}`, bundle);
+      resultCounts.measurePopulation += 1;
     } else if (res.population === populationCodes.ipop) {
       logger.info(`[IPOP] Wrote bundle ${bundleId} to ${dirPaths.ipop}`);
       writeJSONFile(`${dirPaths.ipop}/${path.basename(bundlePath)}`, bundle);
@@ -207,6 +221,7 @@ const processBundles = async (files) => {
         Final Counts:
           - Numerator: ${resultCounts.numerator}
           - Denominator: ${resultCounts.denominator}
+          - Measure Population: ${resultCounts.measurePopulation}
           - IPOP: ${resultCounts.ipop}
           - No Population: ${resultCounts.none}
           --------------------
