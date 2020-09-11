@@ -1,7 +1,7 @@
 const querystring = require('querystring');
 const { logger } = require('./logger');
 const {
-  getPopulationCount, getMeasureScore, getStratifiers, getStratifierName,
+  getPopulationCount, getMeasureScore, getStratifiers, getStratifierName, getMeasureObservation, getSDEs,
 } = require('./fhirpath');
 
 const buildQueryString = (params) => querystring.encode({ reportType: 'patient', ...params });
@@ -38,7 +38,7 @@ function getPopulationResults(group) {
 
   return {
     population: 'none',
-    measureScore,
+    measureScore
   };
 }
 
@@ -54,6 +54,8 @@ const getCalculationResults = async (client, patientId, measureId, periodStart, 
   logger.debug(`Got individual MeasureReport ${JSON.stringify(measureReport)}`);
 
   const stratifiers = getStratifiers(measureReport);
+  const observation = getMeasureObservation(measureReport);
+  const sdes = getSDEs(measureReport);
 
   return {
     ...mainPopulationResults,
@@ -63,6 +65,8 @@ const getCalculationResults = async (client, patientId, measureId, periodStart, 
         name: getStratifierName(strat),
         ...getPopulationResults(strat.stratum[0]),
       }))) : [],
+    observation,
+    sdes
   };
 };
 

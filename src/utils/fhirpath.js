@@ -18,3 +18,34 @@ exports.getStratifiers = (mr) => {
 };
 
 exports.getStratifierName = (strat) => fhirpath.evaluate(strat, 'code.coding.code')[0] || null;
+
+exports.getMeasureObservation = (mr) => {
+  const path = fhirpath.compile(`MeasureReport.contained.where(resourceType = 'Observation'
+    and extension.url = 'http://hl7.org/fhir/StructureDefinition/cqf-measureInfo'
+    and extension.extension.exists(url = 'populationId' and valueString = 'MeasureObservation'))`);
+  const results = path(mr);
+  if (results && results.length > 0) {
+    return `${results[0].valueQuantity.value} ${results[0].valueQuantity.code}`
+  } else {
+    return null;
+  }
+}
+
+exports.getSDEs = (mr) => {
+  const path = fhirpath.compile(`MeasureReport.contained.where(resourceType = 'Observation'
+    and extension.url = 'http://hl7.org/fhir/StructureDefinition/cqf-measureInfo'
+    and extension.extension.exists(url = 'populationId'))`);
+  const results = path(mr);
+
+  if (results && results.length > 0) {
+    return results.filter((obs) => obs.code.text.startsWith('sde-')).map((obs) => {
+      const code = fhirpath.evaluate(obs, 'Observation.valueCodeableConcept.coding')[0];
+      return {
+        name: obs.code.text,
+        ...code
+      };
+    })
+  } else {
+    return null;
+  }
+}

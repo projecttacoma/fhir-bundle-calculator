@@ -148,11 +148,20 @@ const processBundles = async (files) => {
       logger.info(`Measure Score: ${res.measureScore}`);
     }
 
-    logger.debug(`Bundle ${bundleId} calculated with population ${res.population}`);
-    results.push({
+    const csvEntry = {
       bundle: bundleId,
       population: res.population,
-    });
+      observation: res.observation
+    }
+
+    if (res.sdes) {
+      res.sdes.forEach((sde) => {
+        csvEntry[sde.name] = `${sde.code}${sde.display ? ` - ${sde.display}` : ""}`;
+      });
+    }
+
+    logger.debug(`Bundle ${bundleId} calculated with population ${res.population}`);
+    results.push(csvEntry);
 
     if (res.stratifiers) {
       res.stratifiers.forEach((strat) => {
