@@ -151,12 +151,12 @@ const processBundles = async (files) => {
     const csvEntry = {
       bundle: bundleId,
       population: res.population,
-      observation: res.observation
-    }
+      observation: res.observation,
+    };
 
     if (res.sdes) {
       res.sdes.forEach((sde) => {
-        csvEntry[sde.name] = `${sde.code}${sde.display ? ` - ${sde.display}` : ""}`;
+        csvEntry[sde.name] = `${sde.code}${sde.display ? ` - ${sde.display}` : ''}`;
       });
     }
 
@@ -241,7 +241,7 @@ const processBundles = async (files) => {
   try {
     logger.info('Generating patient-list MeasureReport');
     logger.debug(`Using measure ID: ${program.measureId}`);
-    const mrResp = await client.get(`/Measure/${program.measureId}/evaluate-measure?reportType=patient-list&periodStart=${program.periodStart}&periodEnd=${program.periodEnd}`);
+    const mrResp = await client.get(`/Measure/${program.measureId}/$evaluate-measure?reportType=patient-list&periodStart=${program.periodStart}&periodEnd=${program.periodEnd}`);
     writeJSONFile(`${outputPath}/population-measure-report.json`, mrResp.data);
     logger.info(`Wrote MeasureReport to ${outputPath}/population-measure-report.json`);
   } catch (e) {

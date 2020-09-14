@@ -25,11 +25,10 @@ exports.getMeasureObservation = (mr) => {
     and extension.extension.exists(url = 'populationId' and valueString = 'MeasureObservation'))`);
   const results = path(mr);
   if (results && results.length > 0) {
-    return `${results[0].valueQuantity.value} ${results[0].valueQuantity.code}`
-  } else {
-    return null;
+    return `${results[0].valueQuantity.value} ${results[0].valueQuantity.code}`;
   }
-}
+  return null;
+};
 
 exports.getSDEs = (mr) => {
   const path = fhirpath.compile(`MeasureReport.contained.where(resourceType = 'Observation'
@@ -42,10 +41,9 @@ exports.getSDEs = (mr) => {
       const code = fhirpath.evaluate(obs, 'Observation.valueCodeableConcept.coding')[0];
       return {
         name: obs.code.text,
-        ...code
+        ...code,
       };
-    })
-  } else {
-    return null;
+    });
   }
-}
+  return null;
+};
