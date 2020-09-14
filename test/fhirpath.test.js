@@ -1,5 +1,5 @@
 const {
-  getPopulationCount, getMeasureScore, getStratifiers, getStratifierName, getMeasureObservation, getSDEs
+  getPopulationCount, getMeasureScore, getStratifiers, getStratifierName, getMeasureObservation, getSDEs,
 } = require('../src/utils/fhirpath');
 const ipopMeasureReport = require('./fixtures/ipop-measure-report.json');
 const stratifierMeasureReport = require('./fixtures/stratifier-measure-report.json');
@@ -45,22 +45,22 @@ test('Returns null measure observation', () => {
 test('Returns list of SDEs', () => {
   expect(getSDEs(cvMeasureReport)).toEqual([
     {
-      "code": "2106-3",
-      "display": "White",
-      "name": "sde-race",
-      "system": "urn:oid:2.16.840.1.113883.6.238",
+      code: '2106-3',
+      display: 'White',
+      name: 'sde-race',
+      system: 'urn:oid:2.16.840.1.113883.6.238',
     },
     {
-      "system": "urn:oid:2.16.840.1.113883.6.238",
-      "code": "2186-5",
-      "name": "sde-ethnicity",
-      "display": "Not Hispanic or Latino"
+      system: 'urn:oid:2.16.840.1.113883.6.238',
+      code: '2186-5',
+      name: 'sde-ethnicity',
+      display: 'Not Hispanic or Latino',
     },
     {
-      "code": "F",
-      "name": "sde-sex",
+      code: 'F',
+      name: 'sde-sex',
 
-    }
+    },
   ]);
 });
 

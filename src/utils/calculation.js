@@ -38,12 +38,12 @@ function getPopulationResults(group) {
 
   return {
     population: 'none',
-    measureScore
+    measureScore,
   };
 }
 
 const getCalculationResults = async (client, patientId, measureId, periodStart, periodEnd) => {
-  const evalMeasureUrl = `/Measure/${measureId}/evaluate-measure?${buildQueryString({ patient: patientId, periodStart, periodEnd })}`;
+  const evalMeasureUrl = `/Measure/${measureId}/$evaluate-measure?${buildQueryString({ patient: patientId, periodStart, periodEnd })}`;
 
   logger.info(`GET ${evalMeasureUrl}`);
   const response = await client.get(evalMeasureUrl);
@@ -66,7 +66,7 @@ const getCalculationResults = async (client, patientId, measureId, periodStart, 
         ...getPopulationResults(strat.stratum[0]),
       }))) : [],
     observation,
-    sdes
+    sdes,
   };
 };
 
