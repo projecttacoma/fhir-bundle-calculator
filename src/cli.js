@@ -19,7 +19,7 @@ const { logger } = require('./utils/logger');
 const { getCalculationResults } = require('./utils/calculation');
 
 program
-  .version('3.1.1', '-v, --version', 'print the current version')
+  .version('3.1.2', '-v, --version', 'print the current version')
   .option('-d, --directory <input-directory>', 'path to directory of Synthea Bundles')
   .option('-m, --measure-id <measure-id>', 'measure ID to evaluate')
   .option('-u, --url <url>', 'base URL of running cqf-ruler instance', 'http://localhost:8080/cqf-ruler-r4/fhir')
