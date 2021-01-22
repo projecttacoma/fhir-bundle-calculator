@@ -17,9 +17,10 @@
   "license": "Apache-2.0",
   "dependencies": {
     "antlr4": "4.8.0",
-    "axios": "^0.19.2",
-    "commander": "^4.1.1",
+    "axios": "^0.21.1",
+    "commander": "^7.0.0",
     "fhirpath": "2.1.5",
+    "fqm-execution": "^0.1.0",
     "json2csv": "^4.5.4",
     "lodash": "^4.17.20",
     "moment": "^2.29.1",

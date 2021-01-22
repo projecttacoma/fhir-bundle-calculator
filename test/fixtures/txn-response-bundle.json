@@ -1,0 +1,20 @@
+{
+  "resourceType": "Bundle",
+  "id": "example",
+  "type": "transaction-response",
+  "link": [
+    {
+      "relation": "self",
+      "url": "http://localhost"
+    }
+  ],
+  "entry": [
+    {
+      "response": {
+        "status": "201 Created",
+        "location": "Patient/example-patient",
+        "etag": "1"
+      }
+    }
+  ]
+}

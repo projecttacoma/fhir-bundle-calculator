@@ -2,41 +2,58 @@
 
 /* eslint-disable no-await-in-loop */
 
-/**
- * CLI for using the $cql operaiton of a cqf-ruler instance
- * to output calculation results for FHIR patients
- */
-
 const axios = require('axios');
 const fs = require('fs');
 const { parse } = require('json2csv');
 const path = require('path');
-const program = require('commander');
+const { program, Option } = require('commander');
 const moment = require('moment');
 const _ = require('lodash');
+const { Calculator } = require('fqm-execution');
 const errors = require('./utils/errors');
 const { logger } = require('./utils/logger');
 const { getCalculationResults } = require('./utils/calculation');
+const { postPatient, evaluateMeasure } = require('./utils/httpUtils');
 
 program
-  .version('3.1.2', '-v, --version', 'print the current version')
-  .option('-d, --directory <input-directory>', 'path to directory of Synthea Bundles')
-  .option('-m, --measure-id <measure-id>', 'measure ID to evaluate')
-  .option('-u, --url <url>', 'base URL of running cqf-ruler instance', 'http://localhost:8080/cqf-ruler-r4/fhir')
+  .version('4.0.0', '-v, --version', 'print the current version')
+  .addOption(new Option('-t, --type <type>', 'type of calculation').choices(['http', 'fqm']).default('fqm')) // use addOption to enforce list of options
+  .requiredOption('-d, --directory <input-directory>', 'path to directory of patient Bundles')
+  .option('-b, --measure-bundle <measure-bundle>', 'path to measure bundle; required when type is "fqm"')
+  .option('-m, --measure-id <measure-id>', 'measure ID to evaluate; required when type is "http"')
+  .option('-u, --url <url>', 'base URL of running FHIR server; required when type is "http"')
   .option('-s, --period-start <yyyy-mm-dd>', 'start of the calculation period', '2019-01-01')
   .option('-e, --period-end <yyyy-mm-dd>', 'end of the calculation period', '2019-12-31')
-  .usage('-d /path/to/bundles -u http://<cqf-ruler-base-url> -m <measure-id> [-s yyyy-mm-dd -e yyyy-mm-dd]')
-  .parse(process.argv);
+  .usage('-d /path/to/bundles -u http://<fhir-server-base-url> -m <measure-id> [-s yyyy-mm-dd -e yyyy-mm-dd]')
+  .parse();
 
-// Enforce required parameters
-if (!program.directory || !program.url || !program.measureId) {
-  logger.error('-d/--directory, -u/--url, and -m/--measure-id are required');
-  program.help();
+const options = program.opts();
+
+// Enforce parameter rules
+if (options.type === 'http') {
+  if (!options.url || !options.measureId) {
+    logger.error('-u/--url, and -m/--measure-id are required for type "http"');
+    program.help();
+  }
+
+  if (options.measureBundle) {
+    logger.error('-b/--measure-bundle only supported when using type "fqm"');
+    program.help();
+  }
+} else {
+  if (options.url) {
+    logger.error('-u/--url only supported when using type "http"');
+    program.help();
+  }
+
+  if (options.measureId) {
+    logger.error('-m/--measureId only supported when using type "http"');
+    program.help();
+  }
 }
-
 // We expect the directory containing the bundles to already exist
-if (!fs.existsSync(program.directory)) {
-  logger.error(`Cannot find directory ${program.directory}\n`);
+if (!fs.existsSync(options.directory)) {
+  logger.error(`Cannot find directory ${options.directory}\n`);
   program.help();
 }
 
@@ -60,10 +77,10 @@ const outputFile = `${outputPath}/results.csv`;
 
 // Read in bundles and cql
 logger.debug('Reading bundles');
-const bundleFiles = fs.readdirSync(program.directory).filter((f) => path.extname(f) === '.json');
+const bundleFiles = fs.readdirSync(options.directory).filter((f) => path.extname(f) === '.json');
 
 if (_.isEmpty(bundleFiles)) {
-  logger.error(`No bundles found in ${program.directory}`);
+  logger.error(`No bundles found in ${options.directory}`);
   process.exit(1);
 }
 
@@ -85,60 +102,66 @@ const resultCounts = {
   total: 0,
 };
 
-const client = axios.create({ baseURL: program.url });
+const client = options.type === 'http' ? axios.create({ baseURL: options.url }) : null;
 const writeJSONFile = (filePath, content) => fs.writeFileSync(filePath, JSON.stringify(content), 'utf8');
 
 const processBundles = async (files) => {
   // Notes: Need to use for ... of ... to allow loop to halt until we get a response from the server
   // eslint-disable-next-line no-restricted-syntax
   for (const file of files) {
-    const bundlePath = path.join(path.resolve(program.directory), file);
+    const bundlePath = path.join(path.resolve(options.directory), file);
     const bundleId = path.basename(bundlePath, '.json');
 
     logger.debug(`Parsing patient bundle ${bundleId}`);
     const bundle = JSON.parse(fs.readFileSync(bundlePath, 'utf8'));
 
-    // POST bundle to the server
-    let postBundleResponse;
-    try {
-      logger.info(`Posting bundle ${bundleId}`);
-      postBundleResponse = await client.post('/', bundle);
-    } catch (e) {
-      errors.handleHttpError(e);
+    let patientId;
+    if (options.type === 'http') {
+      patientId = await postPatient(bundleId, bundle, client);
+    } else {
+      const patient = bundle.entry.map((e) => e.resource).find((e) => e.resourceType === 'Patient');
+
+      if (!patient.id) {
+        logger.error(`Could not find a patiend resource with an id in ${bundleId}`);
+        process.exit(1);
+      }
+
+      patientId = patient.id;
     }
-
-    // Server may generate the ID for the posted patient resource
-    logger.debug('Searching for patient ID in server response');
-    const patientLoc = postBundleResponse.data.entry.find((e) => e.response.location.includes('Patient/')).response.location;
-
-    if (!patientLoc) {
-      logger.error(`Could not find a location for 'Patient/' in response: ${JSON.stringiy(postBundleResponse.data)}`);
-      process.exit(1);
-    }
-
-    // ID will be of format Patient/<something>
-    const patientId = patientLoc.split('/')[1];
-
-    if (!patientId) {
-      logger.error(`Could not parse an ID from ${patientLoc}`);
-      process.exit(1);
-    }
-
-    logger.debug(`Found generated patient ID: ${patientId}`);
 
     logger.info(`Running calculation on Patient ${patientId}`);
-    let res;
-    try {
-      res = await getCalculationResults(
-        client,
-        patientId,
-        program.measureId,
-        program.periodStart,
-        program.periodEnd,
-      );
-    } catch (e) {
-      errors.handleHttpError(e);
+
+    let measureReport;
+    if (options.type === 'http') {
+      try {
+        measureReport = await evaluateMeasure(
+          client,
+          patientId,
+          options.measureId,
+          options.periodStart,
+          options.periodEnd,
+        );
+      } catch (e) {
+        errors.handleHttpError(e);
+      }
+    } else {
+      const measureBundle = JSON.parse(fs.readFileSync(options.measureBundle, 'utf8'));
+
+      try {
+        const calcResults = Calculator.calculateMeasureReports(measureBundle, [bundle], {
+          calculateSDEs: true,
+          calculateHTML: true,
+          periodStart: options.periodStart,
+          periodEnd: options.periodEnd,
+        });
+
+        [measureReport] = calcResults.results;
+      } catch (e) {
+        logger.error(`Calculation error in fqm-execution: ${e.message}`);
+      }
     }
+
+    const res = getCalculationResults(measureReport);
 
     const measureReportFile = `${dirPaths.measureReport}/${bundleId}-MeasureReport.json`;
     writeJSONFile(measureReportFile, res.measureReport);
@@ -237,15 +260,17 @@ const processBundles = async (files) => {
           - Total: ${resultCounts.total}
       `);
 
-  // Get a patient-list MeasureReport from cqf-ruler
-  try {
-    logger.info('Generating patient-list MeasureReport');
-    logger.debug(`Using measure ID: ${program.measureId}`);
-    const mrResp = await client.get(`/Measure/${program.measureId}/$evaluate-measure?reportType=patient-list&periodStart=${program.periodStart}&periodEnd=${program.periodEnd}`);
-    writeJSONFile(`${outputPath}/population-measure-report.json`, mrResp.data);
-    logger.info(`Wrote MeasureReport to ${outputPath}/population-measure-report.json`);
-  } catch (e) {
-    errors.handleHttpError(e);
+  // Get a patient-list MeasureReport from server
+  if (options.type === 'http') {
+    try {
+      logger.info('Generating patient-list MeasureReport');
+      logger.debug(`Using measure ID: ${options.measureId}`);
+      const mrResp = await client.get(`/Measure/${options.measureId}/$evaluate-measure?reportType=patient-list&periodStart=${options.periodStart}&periodEnd=${options.periodEnd}`);
+      writeJSONFile(`${outputPath}/population-measure-report.json`, mrResp.data);
+      logger.info(`Wrote MeasureReport to ${outputPath}/population-measure-report.json`);
+    } catch (e) {
+      errors.handleHttpError(e);
+    }
   }
 };
 

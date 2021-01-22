@@ -1,15 +1,14 @@
 # FHIR-bundle-calculator
 
-[![Build Status](https://travis-ci.com/projecttacoma/fhir-bundle-calculator.svg?branch=master)](https://travis-ci.com/projecttacoma/fhir-bundle-calculator)
+![CI](https://img.shields.io/github/workflow/status/projecttacoma/fhir-bundle-calculator/Continuous%20Integration)
 
-A CLI for outputting population statistics and MeasureReports for FHIR patients for an eCQM using the `$evaluate-measure` operation of the [cqf-ruler](https://github.com/DBCG/cqf-ruler) HAPI FHIR server
+A CLI for outputting population statistics and MeasureReports for FHIR patients for a FHIR-based eCQM
 
 # Usage
 
 ## Prerequisites
 
 * [Node.js >=10.15.1](https://nodejs.org/en/)
-* A running `cqf-ruler` server. See their [usage instructions](https://github.com/DBCG/cqf-ruler#usage) or use a public sandbox
 
 ## Installation with NPM
 
@@ -33,16 +32,39 @@ calculate-bundles [--options]
 Available options:
 
 ```
-Usage: calculate-bundles -d /path/to/bundles -u http://<cqf-ruler-base-url> -m <measure-id> [-s yyyy-mm-dd -e yyyy-mm-dd]
+-v, --version                          print the current version
+-t, --type <type>                      type of calculation (choices: "http", "fqm", default: "fqm")
+-d, --directory <input-directory>      path to directory of patient Bundles
+-b, --measure-bundle <measure-bundle>  path to measure bundle; required when type is "fqm"
+-m, --measure-id <measure-id>          measure ID to evaluate; required when type is "http"
+-u, --url <url>                        base URL of running FHIR server; required when type is "http"
+-s, --period-start <yyyy-mm-dd>        start of the calculation period (default: "2019-01-01")
+-e, --period-end <yyyy-mm-dd>          end of the calculation period (default: "2019-12-31")
+-h, --help                             display help for command
+```
 
-Options:
-  -v, --version                      print the current version
-  -d, --directory <input-directory>  path to directory of Synthea Bundles
-  -m, --measure-id <measure-id>      measure ID to evaluate
-  -u, --url <url>                    base URL of running cqf-ruler instance (default: "http://localhost:8080/cqf-ruler-r4/fhir")
-  -s, --period-start <yyyy-mm-dd>    start of the calculation period (default: "2019-01-01")
-  -e, --period-end <yyyy-mm-dd>      end of the calculation period (default: "2019-12-31")
-  -h, --help                         output usage information
+## Calculation with fqm-execution (default)
+
+By default, `fhir-bundle-calculator` uses the [fqm-execution](https://github.com/projecttacoma/fqm-execution) library to calculate FHIR MeasureReports.
+
+This library requires a Bundle be provided containing the FHIR Measure resource, any relevant FHIR Library resources, and any FHIR ValueSet resources needed for measure calculation. This is provided via the `-b/--measure-bundle` flag:
+
+e.g.
+``` bash
+calculate-bundles -d /path/to/patient/bundles -b /path/to/measure/bundle
+```
+
+## Calculation with cqf-ruler
+
+`fhir-bundle-calculator` can be used to communicate with any FHIR server that supports the [$evaluate-measure FHIR operation](https://www.hl7.org/fhir/operation-measure-evaluate-measure.html)
+
+The `cqf-ruler` reference implementation is one such server. See their [usage instructions](https://github.com/DBCG/cqf-ruler#usage) or use a public sandbox to quickly get started.
+
+Run the CLI wih output type `"http"`, and provide the ID of the FHIR Measure resourcea along with the URL of the server:
+
+e.g.
+``` bash
+calculate-bundles -d /path/to/patient/bundles -t http -u http://localhost:8080/cqf-ruler-r4/fhir -m myMeasureID
 ```
 
 ## Local Usage
