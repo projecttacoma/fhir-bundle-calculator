@@ -50,6 +50,11 @@ if (options.type === 'http') {
     logger.error('-m/--measureId only supported when using type "http"');
     program.help();
   }
+
+  if (!options.measureBundle) {
+    logger.error('-b/--measure-bundle is required for type "fqm"');
+    program.help();
+  }
 }
 // We expect the directory containing the bundles to already exist
 if (!fs.existsSync(options.directory)) {
