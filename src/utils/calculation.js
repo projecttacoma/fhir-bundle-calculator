@@ -1,10 +1,7 @@
-const querystring = require('querystring');
 const { logger } = require('./logger');
 const {
   getPopulationCount, getMeasureScore, getStratifiers, getStratifierName, getMeasureObservation, getSDEs,
 } = require('./fhirpath');
-
-const buildQueryString = (params) => querystring.encode({ reportType: 'patient', ...params });
 
 function getPopulationResults(group) {
   const measureScore = getMeasureScore(group);
@@ -42,12 +39,7 @@ function getPopulationResults(group) {
   };
 }
 
-const getCalculationResults = async (client, patientId, measureId, periodStart, periodEnd) => {
-  const evalMeasureUrl = `/Measure/${measureId}/$evaluate-measure?${buildQueryString({ patient: patientId, periodStart, periodEnd })}`;
-
-  logger.info(`GET ${evalMeasureUrl}`);
-  const response = await client.get(evalMeasureUrl);
-  const measureReport = response.data;
+const getCalculationResults = (measureReport) => {
   const mainGroup = measureReport.group[0];
   const mainPopulationResults = getPopulationResults(mainGroup);
 
