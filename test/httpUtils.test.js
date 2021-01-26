@@ -25,7 +25,7 @@ test('should properly call $evaluate-measure', async () => {
     .get(`/Measure/${EXAMPLE_MEASURE_ID}/$evaluate-measure`)
     .query({
       reportType: 'patient',
-      subject: EXAMPLE_PATIENT_ID,
+      patient: EXAMPLE_PATIENT_ID,
       periodStart: PERIOD_START,
       periodEnd: PERIOD_END,
     })
